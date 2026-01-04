@@ -2,8 +2,13 @@ package com.grab.api.service;
 
 import com.grab.api.service.domain.Location;
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.domain.driver.DriverSearchCriteria;
 import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.model.OutboxEvent;
+import com.grab.api.share.enumeration.DriverStatus;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +21,13 @@ public class DriverService {
   public DriverService(DriverStore driverStore, OutboxEventStore outboxEventStore) {
     this.driverStore = driverStore;
     this.outboxEventStore = outboxEventStore;
+  }
+
+  public Optional<Driver> findNearestDriver(Location pickupLocation) {
+    var criteria = new DriverSearchCriteria(DriverStatus.AVAILABLE, true);
+    return driverStore.find(criteria).stream()
+        .min(Comparator.comparing(
+            driver -> Objects.requireNonNull(driver.location()).distanceTo(pickupLocation)));
   }
 
   @Transactional
