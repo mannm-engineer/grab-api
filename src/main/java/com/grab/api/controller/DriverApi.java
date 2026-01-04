@@ -2,7 +2,7 @@ package com.grab.api.controller;
 
 import com.grab.api.controller.dto.DriverCreateDTO;
 import com.grab.api.controller.dto.DriverDTO;
-import com.grab.api.controller.dto.DriverLocationUpdateDTO;
+import com.grab.api.controller.dto.LocationDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,6 +37,5 @@ public interface DriverApi {
   })
   void updateDriverLocation(
       @Parameter(description = "Driver ID", example = "123", required = true) String id,
-      @Schema(description = "Driver location update payload") @Valid
-          DriverLocationUpdateDTO driverLocationUpdateDTO);
+      @Schema(description = "Driver location update payload") @Valid LocationDTO locationDTO);
 }
