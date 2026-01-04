@@ -59,3 +59,23 @@ CREATE TABLE outbox_event
   payload    TEXT         NOT NULL,
   created_at TIMESTAMP    NOT NULL
 );
+
+-- ==================================
+-- 🚕 RIDE TABLE
+-- ==================================
+DROP TABLE IF EXISTS ride;
+CREATE TABLE ride
+(
+  id           BIGSERIAL PRIMARY KEY,
+  passenger_id UUID             NOT NULL,
+
+  -- 📍 Pickup location
+  pickup_lat   DOUBLE PRECISION NOT NULL,
+  pickup_lng   DOUBLE PRECISION NOT NULL,
+
+  -- 🎯 Dropoff location
+  dropoff_lat  DOUBLE PRECISION NOT NULL,
+  dropoff_lng  DOUBLE PRECISION NOT NULL,
+
+  status       VARCHAR(50)      NOT NULL
+);
