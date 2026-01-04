@@ -5,7 +5,7 @@ import static com.grab.api.controller.converter.MultipartFileConverter.toFileUpl
 import com.grab.api.controller.api.DriverApi;
 import com.grab.api.controller.dto.DriverCreateDTO;
 import com.grab.api.controller.dto.DriverDTO;
-import com.grab.api.controller.dto.DriverLocationUpdateDTO;
+import com.grab.api.controller.dto.LocationDTO;
 import com.grab.api.service.DriverService;
 import java.util.List;
 import org.slf4j.Logger;
@@ -52,13 +52,12 @@ public class DriverRestController implements DriverApi {
   @Override
   @PutMapping("{id}/location")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void updateLocation(
-      @PathVariable String id, @RequestBody DriverLocationUpdateDTO driverLocationUpdateDTO) {
+  public void updateLocation(@PathVariable String id, @RequestBody LocationDTO locationDTO) {
     LOGGER.info(
         "Receive request to update location of driver {} (lat={}, lng={})",
         id,
-        driverLocationUpdateDTO.lat(),
-        driverLocationUpdateDTO.lng());
-    driverService.updateLocation(id, driverLocationUpdateDTO.location());
+        locationDTO.lat(),
+        locationDTO.lng());
+    driverService.updateLocation(id, locationDTO.location());
   }
 }
