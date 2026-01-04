@@ -16,7 +16,7 @@ public record DriverEntity(
     @Column("full_name") String fullName,
     @Column("mobile_phone") String mobilePhone,
 
-    @Embedded(onEmpty = Embedded.OnEmpty.USE_EMPTY, prefix = "location_") @Nullable
+    @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "location_") @Nullable
     LocationEntity location,
 
     @Column("status") DriverStatus status,
