@@ -15,3 +15,13 @@ server:
 
 outbox:
   batch-size: 50
+
+jwt:
+  private.key: classpath:app.key
+  public.key: classpath:app.pub
+
+app:
+  user:
+    master:
+      username: ${MASTER_USERNAME}
+      password: ${MASTER_PASSWORD}
