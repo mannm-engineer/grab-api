@@ -2,8 +2,10 @@ package com.grab.api.service;
 
 import static com.grab.api.share.enumeration.DomainEventType.CREATED;
 
+import com.grab.api.service.domain.Location;
 import com.grab.api.service.domain.driver.DriverCreate;
 import com.grab.api.service.domain.file.FileUpload;
+import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.exception.InvalidInputException;
 import com.grab.api.service.model.OutboxEvent;
 import java.util.HashSet;
@@ -88,5 +90,15 @@ public class DriverService {
     if (!extraFiles.isEmpty()) {
       throw new InvalidInputException("Unexpected uploaded files: " + extraFiles);
     }
+  }
+
+  public void updateDriverLocation(String id, Location newLocation) {
+    var existing = driverStore
+        .getDriver(id)
+        .orElseThrow(() -> new DomainNotFoundException("Driver with id " + id + " not found"));
+
+    var updated = existing.withLocation(newLocation);
+
+    driverStore.updateDriver(updated);
   }
 }

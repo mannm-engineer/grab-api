@@ -1,6 +1,7 @@
 package com.grab.api.service.domain.driver;
 
 import com.grab.api.service.domain.Audit;
+import com.grab.api.service.domain.Location;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ public record Driver(
     @Nullable String id,
     String fullName,
     String mobilePhone,
+    @Nullable Location location,
     DriverStatus status,
     Integer age,
     Double rating,
@@ -33,6 +35,7 @@ public record Driver(
         null,
         fullName,
         mobilePhone,
+        null,
         DriverStatus.AVAILABLE,
         age,
         rating,
@@ -41,5 +44,21 @@ public record Driver(
         dateOfBirth,
         documents,
         null);
+  }
+
+  public Driver withLocation(Location location) {
+    return new Driver(
+        id,
+        fullName,
+        mobilePhone,
+        location,
+        status,
+        age,
+        rating,
+        isVerified,
+        balance,
+        dateOfBirth,
+        documents,
+        audit);
   }
 }

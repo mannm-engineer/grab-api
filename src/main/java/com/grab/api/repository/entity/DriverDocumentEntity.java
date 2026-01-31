@@ -25,4 +25,10 @@ public record DriverDocumentEntity(
     return new DriverDocumentEntity(
         null, document.type(), document.documentNumber(), document.expiryDate(), files);
   }
+
+  public DriverDocument driverDocument() {
+    var fileUrls =
+        files.stream().map(DriverDocumentFileEntity::fileUrl).collect(Collectors.toList());
+    return new DriverDocument(type, documentNumber, expiryDate, fileUrls);
+  }
 }
