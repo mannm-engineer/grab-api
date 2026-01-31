@@ -24,4 +24,8 @@ public record DriverDocumentEntity(
         document.expiryDate(),
         document.fileUrl());
   }
+
+  public DriverDocument driverDocument() {
+    return new DriverDocument(type, documentNumber, expiryDate, fileUrl);
+  }
 }

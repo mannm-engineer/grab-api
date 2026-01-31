@@ -1,5 +1,6 @@
 package com.grab.api.controller.exception;
 
+import com.grab.api.service.exception.DomainNotFoundException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     problemDetail.setProperty("fieldErrors", fieldErrors);
 
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
+  }
+
+  @ExceptionHandler(DomainNotFoundException.class)
+  public ProblemDetail handleDomainNotFoundException(DomainNotFoundException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
   }
 
   @ExceptionHandler(DuplicateKeyException.class)
