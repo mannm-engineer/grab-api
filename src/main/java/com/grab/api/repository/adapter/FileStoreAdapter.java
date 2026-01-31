@@ -18,8 +18,6 @@ public class FileStoreAdapter implements FileStore {
 
   @Override
   public Optional<ExistingFile> findById(String id) {
-    return fileRepository
-        .findById(Long.parseLong(id))
-        .map(FileEntity::existingFile);
+    return fileRepository.findById(Long.parseLong(id)).map(FileEntity::existingFile);
   }
 }

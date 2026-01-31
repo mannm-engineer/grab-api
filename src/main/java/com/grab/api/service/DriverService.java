@@ -3,9 +3,11 @@ package com.grab.api.service;
 import static com.grab.api.share.enumeration.DomainEventType.CREATED;
 import static com.grab.api.share.enumeration.DomainType.DRIVER;
 
+import com.grab.api.service.domain.Location;
 import com.grab.api.service.domain.driver.DriverCreate;
 import com.grab.api.service.domain.event.OutboxEvent;
 import com.grab.api.service.domain.file.NewFile;
+import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.exception.InvalidInputException;
 import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.store.FileContentStore;
@@ -90,5 +92,13 @@ public class DriverService {
         LOGGER.error("Failed to delete file {} after driver creation failure", url, e);
       }
     });
+  }
+
+  public void updateLocation(String id, Location newLocation) {
+    var existing = driverStore.get(id).orElseThrow(() -> new DomainNotFoundException(id));
+
+    var updated = existing.withLocation(newLocation);
+
+    driverStore.update(updated);
   }
 }

@@ -4,6 +4,7 @@ import com.grab.api.service.domain.driver.Driver;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,10 @@ public record DriverEntity(
     @Id @Column("id") @Nullable Long id,
     @Column("full_name") String fullName,
     @Column("mobile_phone") String mobilePhone,
+
+    @Embedded(onEmpty = Embedded.OnEmpty.USE_EMPTY, prefix = "location_") @Nullable
+    LocationEntity location,
+
     @Column("status") DriverStatus status,
     @Column("age") Integer age,
     @Column("rating") Double rating,
@@ -35,6 +40,7 @@ public record DriverEntity(
         id,
         fullName,
         mobilePhone,
+        location,
         status,
         age,
         rating,
@@ -52,6 +58,7 @@ public record DriverEntity(
         Optional.ofNullable(driver.id()).map(Long::valueOf).orElse(null),
         driver.fullName(),
         driver.mobilePhone(),
+        Optional.ofNullable(driver.location()).map(LocationEntity::of).orElse(null),
         driver.status(),
         driver.age(),
         driver.rating(),
@@ -60,5 +67,21 @@ public record DriverEntity(
         driver.dateOfBirth(),
         documents,
         Optional.ofNullable(driver.audit()).map(AuditEntity::of).orElse(null));
+  }
+
+  public Driver driver() {
+    return new Driver(
+        Objects.requireNonNull(id).toString(),
+        fullName,
+        mobilePhone,
+        Optional.ofNullable(location).map(LocationEntity::location).orElse(null),
+        status,
+        age,
+        rating,
+        isVerified,
+        balance,
+        dateOfBirth,
+        documents.stream().map(DriverDocumentEntity::driverDocument).toList(),
+        Objects.requireNonNull(audit).audit());
   }
 }
