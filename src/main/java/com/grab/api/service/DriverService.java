@@ -23,8 +23,8 @@ public class DriverService {
     this.outboxEventStore = outboxEventStore;
   }
 
-  public Optional<Driver> findNearestDriver(Location pickupLocation) {
-    var criteria = new DriverSearchCriteria(DriverStatus.AVAILABLE, true);
+  public Optional<Driver> findNearestDriver(String mapId, Location pickupLocation) {
+    var criteria = new DriverSearchCriteria(mapId, DriverStatus.AVAILABLE, true);
     return driverStore.find(criteria).stream()
         .min(Comparator.comparing(
             driver -> Objects.requireNonNull(driver.location()).distanceTo(pickupLocation)));

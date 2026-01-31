@@ -37,6 +37,7 @@ class RideApiInputValidationTest {
             // language=JSON
             """
             {
+              "mapId": null,
               "passengerId": null
             }
             """),
@@ -45,6 +46,7 @@ class RideApiInputValidationTest {
             // language=JSON
             """
             {
+              "mapId": "",
               "passengerId": ""
             }
             """));
@@ -62,6 +64,7 @@ class RideApiInputValidationTest {
         // .andDo(print()) // enable this line to see the full MockMvc request/response details
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("mapId: must not be blank")))
         .andExpect(jsonPath("$.fieldErrors", hasItem("passengerId: must not be blank")));
   }
 

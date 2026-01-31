@@ -22,6 +22,9 @@ public class DriverDatabaseStore implements DriverStore {
   public List<Driver> find(DriverSearchCriteria criteria) {
     var stream = driverRepository.findAll().stream().map(DriverEntity::driver);
 
+    if (criteria.mapId() != null) {
+      stream = stream.filter(driver -> driver.mapId().equals(criteria.mapId()));
+    }
     if (criteria.status() != null) {
       stream = stream.filter(driver -> driver.status() == criteria.status());
     }

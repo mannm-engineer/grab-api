@@ -7,6 +7,13 @@ import jakarta.validation.constraints.Pattern;
 
 @Schema(description = "Request payload to create a new driver")
 public record DriverCreateDTO(
+    @Schema(
+        description = "UUID identifying the map associated with the driver",
+        format = "uuid",
+        example = "550e8400-e29b-41d4-a716-446655440000")
+    @NotBlank
+    String mapId,
+
     @Schema(description = "Full name of the driver", example = "John Doe") @NotBlank
     String fullName,
 
@@ -20,6 +27,6 @@ public record DriverCreateDTO(
     String mobilePhone) {
 
   public Driver driver() {
-    return Driver.newDriver(fullName, mobilePhone);
+    return Driver.newDriver(mapId, fullName, mobilePhone);
   }
 }

@@ -13,6 +13,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("ride")
 public record RideEntity(
     @Id @Column("id") @Nullable Long id,
+    @Column("map_id") UUID mapId,
     @Column("passenger_id") UUID passengerId,
 
     @Embedded(onEmpty = Embedded.OnEmpty.USE_EMPTY, prefix = "pickup_")
@@ -26,6 +27,7 @@ public record RideEntity(
   public static RideEntity of(Ride ride) {
     return new RideEntity(
         Optional.ofNullable(ride.id()).map(Long::valueOf).orElse(null),
+        UUID.fromString(ride.mapId()),
         UUID.fromString(ride.passengerId()),
         LocationEntity.of(ride.pickupLocation()),
         LocationEntity.of(ride.dropoffLocation()),

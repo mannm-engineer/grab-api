@@ -8,6 +8,13 @@ import jakarta.validation.constraints.NotNull;
 @Schema(description = "Request payload to create a new ride")
 public record RideCreateDTO(
     @Schema(
+        description = "UUID identifying the map associated with the ride",
+        format = "uuid",
+        example = "550e8400-e29b-41d4-a716-446655440000")
+    @NotBlank
+    String mapId,
+
+    @Schema(
         description = "Unique identifier of the passenger requesting the ride",
         format = "uuid",
         example = "550e8400-e29b-41d4-a716-446655440000")
@@ -21,6 +28,6 @@ public record RideCreateDTO(
     LocationDTO dropoffLocation) {
 
   public Ride ride() {
-    return Ride.newRide(passengerId, pickupLocation.location(), dropoffLocation.location());
+    return Ride.newRide(mapId, passengerId, pickupLocation.location(), dropoffLocation.location());
   }
 }

@@ -5,8 +5,9 @@ DROP TABLE IF EXISTS driver;
 CREATE TABLE driver
 (
   id           BIGSERIAL PRIMARY KEY,
+  map_id       UUID         NOT NULL,
   full_name    VARCHAR(255) NOT NULL,
-  mobile_phone VARCHAR(50)  NOT NULL UNIQUE,
+  mobile_phone VARCHAR(50)  NOT NULL,
   location_lat DOUBLE PRECISION,
   location_lng DOUBLE PRECISION,
   status       VARCHAR(50)  NOT NULL,
@@ -38,6 +39,7 @@ DROP TABLE IF EXISTS ride;
 CREATE TABLE ride
 (
   id           BIGSERIAL PRIMARY KEY,
+  map_id       UUID             NOT NULL,
   passenger_id UUID             NOT NULL,
 
   -- 📍 Pickup location

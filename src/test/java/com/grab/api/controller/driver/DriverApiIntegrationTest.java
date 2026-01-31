@@ -9,10 +9,10 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.json.BasicJsonTester;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.jdbc.Sql;
@@ -59,6 +59,7 @@ class DriverApiIntegrationTest {
             // language=JSON
             """
             {
+              "mapId": "f1cc812c-f2ce-45d8-b4e8-933bf1243178",
               "fullName": "John Doe",
               "mobilePhone": "+6591234567"
             }
@@ -97,6 +98,7 @@ class DriverApiIntegrationTest {
           .isEqualTo(new HashMap<String, Object>() {
             {
               put("id", 1L);
+              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
               put("full_name", "John Doe");
               put("mobile_phone", "+6591234567");
               put("location_lat", null);
@@ -136,50 +138,8 @@ class DriverApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, created_at, created_by)
-    VALUES ('John Doe', '+6591234567', 'AVAILABLE', now(), 'SYSTEM');
-  """)
-  void createDriver_duplicateMobilePhone_responseConflict() {
-    // ACT
-    var responseSpec = restTestClient
-        .post()
-        .uri("/drivers")
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .body(
-            // language=JSON
-            """
-            {
-              "fullName": "Jane Doe",
-              "mobilePhone": "+6591234567"
-            }
-            """)
-        .exchange();
-
-    // ASSERT
-    // @spotless:off
-    responseSpec
-      .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
-      .expectBody(String.class)
-      .value(body ->
-        assertThat(JSON_TESTER.from(body))
-          .isStrictlyEqualToJson(
-            // language=JSON
-            """
-            {
-               "detail" : "An unexpected error occurred.",
-               "instance" : "/api/drivers",
-               "status" : 500,
-               "title" : "Internal Server Error"
-             }
-            """));
-    // @spotless:on
-  }
-
-  @Test
-  @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, location_lat, location_lng, status, created_at, created_by, updated_at, updated_by)
-    VALUES ('John Doe', '+6591234567', NULL, NULL, 'AVAILABLE', now(), 'SYSTEM', null, null);
+    INSERT INTO driver (map_id, full_name, mobile_phone, location_lat, location_lng, status, created_at, created_by, updated_at, updated_by)
+    VALUES ('f1cc812c-f2ce-45d8-b4e8-933bf1243178', 'John Doe', '+6591234567', NULL, NULL, 'AVAILABLE', now(), 'SYSTEM', null, null);
   """)
   void updateDriverLocation_driverExists_responseNoContent() {
     // ARRANGE
@@ -199,6 +159,7 @@ class DriverApiIntegrationTest {
           .isEqualTo(new HashMap<String, Object>() {
             {
               put("id", 1L);
+              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
               put("full_name", "John Doe");
               put("mobile_phone", "+6591234567");
               put("location_lat", null);
@@ -252,6 +213,7 @@ class DriverApiIntegrationTest {
           .isEqualTo(new HashMap<String, Object>() {
             {
               put("id", 1L);
+              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
               put("full_name", "John Doe");
               put("mobile_phone", "+6591234567");
               put("location_lat", 10.0);

@@ -42,6 +42,7 @@ class RideApiIntegrationTest {
             // language=JSON
             """
             {
+              "mapId": "fc4328d3-f9b9-4d48-8fa7-f022c22a6e2a",
               "passengerId": "28088f63-d3a6-4714-913d-940a084df57e",
               "pickupLocation": {
                 "lat": 10.0,
@@ -71,6 +72,7 @@ class RideApiIntegrationTest {
     assertThat(rideAfter).usingRecursiveComparison().isEqualTo(new HashMap<String, Object>() {
       {
         put("id", 1L);
+        put("map_id", UUID.fromString("fc4328d3-f9b9-4d48-8fa7-f022c22a6e2a"));
         put("passenger_id", UUID.fromString("28088f63-d3a6-4714-913d-940a084df57e"));
         put("pickup_lat", 10.0);
         put("pickup_lng", 20.0);

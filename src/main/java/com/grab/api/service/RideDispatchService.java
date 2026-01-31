@@ -32,19 +32,22 @@ public class RideDispatchService {
   @Async
   public void dispatchRide(Ride ride) {
     LOGGER.info(
-        "Dispatching ride: rideId={}, passengerId={}, pickup=({}, {}), dropoff=({}, {})",
+        "Dispatching ride: rideId={}, mapId={}, passengerId={}, pickup=({}, {}), dropoff=({}, {})",
         ride.id(),
+        ride.mapId(),
         ride.passengerId(),
         ride.pickupLocation().lat(),
         ride.pickupLocation().lng(),
         ride.dropoffLocation().lat(),
         ride.dropoffLocation().lng());
 
-    var driver = driverService.findNearestDriver(ride.pickupLocation()).orElseThrow();
+    var driver =
+        driverService.findNearestDriver(ride.mapId(), ride.pickupLocation()).orElseThrow();
 
     LOGGER.info(
-        "Nearest driver found: driverId={}, driverLocation=({}, {}), rideId={}",
+        "Nearest driver found: driverId={}, driverId={}, driverLocation=({}, {}), rideId={}",
         driver.id(),
+        driver.mapId(),
         Objects.requireNonNull(driver.location()).lat(),
         Objects.requireNonNull(driver.location()).lng(),
         ride.id());
