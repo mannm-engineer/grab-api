@@ -2,6 +2,7 @@ package com.grab.api.controller.driver;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,7 +25,7 @@ class DriverApiInputValidationTest {
   @Autowired
   private MockMvc mockMvc;
 
-  static Stream<Arguments> notBlankFieldScenarios() {
+  static Stream<Arguments> createDriver_notBlankFieldScenarios() {
     return Stream.of(
         Arguments.of(
             "missing",
@@ -53,7 +54,7 @@ class DriverApiInputValidationTest {
   }
 
   @ParameterizedTest(name = "{0}")
-  @MethodSource("notBlankFieldScenarios")
+  @MethodSource("createDriver_notBlankFieldScenarios")
   void createDriver_missingRequiredField_responseBadRequest(String scenario, String requestBody)
       throws Exception {
     mockMvc
@@ -110,5 +111,49 @@ class DriverApiInputValidationTest {
         .andExpect(jsonPath(
             "$.fieldErrors",
             hasItem("mobilePhone: must be a valid E.164 phone number (e.g., +6591234567)")));
+  }
+
+  static Stream<Arguments> updateDriverLocation_notBlankFieldScenarios() {
+    return Stream.of(
+        Arguments.of(
+            "missing",
+            // language=JSON
+            """
+            {}
+            """),
+        Arguments.of(
+            "null",
+            // language=JSON
+            """
+            {
+              "lat": null,
+              "lng": null
+            }
+            """),
+        Arguments.of(
+            "empty string",
+            // language=JSON
+            """
+            {
+              "lat": "",
+              "lng": ""
+            }
+            """));
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("updateDriverLocation_notBlankFieldScenarios")
+  void updateDriverLocation_missingRequiredField_responseBadRequest(
+      String scenario, String requestBody) throws Exception {
+    mockMvc
+        .perform(put("/drivers/1/location")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        // .andDo(print()) // enable this line to see the full MockMvc request/response details
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("Invalid request content."))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("lat: must not be null")))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("lng: must not be null")));
   }
 }

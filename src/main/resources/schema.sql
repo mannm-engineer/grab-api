@@ -7,6 +7,8 @@ CREATE TABLE driver
   id           BIGSERIAL PRIMARY KEY,
   full_name    VARCHAR(255) NOT NULL,
   mobile_phone VARCHAR(50)  NOT NULL UNIQUE,
+  location_lat DOUBLE PRECISION,
+  location_lng DOUBLE PRECISION,
   status       VARCHAR(50)  NOT NULL,
   -- 🔍 Audit fields
   created_at   TIMESTAMP    NOT NULL,
