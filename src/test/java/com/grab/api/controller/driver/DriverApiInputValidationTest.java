@@ -1,6 +1,7 @@
 package com.grab.api.controller.driver;
 
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -326,5 +327,49 @@ class DriverApiInputValidationTest {
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Required part 'files' is not present."));
+  }
+
+  static Stream<Arguments> updateDriverLocation_blankFields() {
+    return Stream.of(
+        Arguments.of(
+            "missing",
+            // language=JSON
+            """
+            {}
+            """),
+        Arguments.of(
+            "null",
+            // language=JSON
+            """
+            {
+              "lat": null,
+              "lng": null
+            }
+            """),
+        Arguments.of(
+            "empty string",
+            // language=JSON
+            """
+            {
+              "lat": "",
+              "lng": ""
+            }
+            """));
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("updateDriverLocation_blankFields")
+  void updateDriverLocation_blankFields_responseBadRequest(String scenario, String requestBody)
+      throws Exception {
+    mockMvc
+        .perform(put("/drivers/1/location")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .content(requestBody))
+        // .andDo(print()) // enable this line to see the full MockMvc request/response details
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("Invalid request content."))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("lat: must not be null")))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("lng: must not be null")));
   }
 }

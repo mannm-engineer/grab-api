@@ -132,6 +132,8 @@ class DriverApiIntegrationTest {
               put("id", 1L);
               put("full_name", "John Doe");
               put("mobile_phone", "+6591234567");
+              put("location_lat", null);
+              put("location_lng", null);
               put("status", DriverStatus.AVAILABLE.name());
               put("age", 30);
               put("rating", 4.5);
@@ -259,6 +261,136 @@ class DriverApiIntegrationTest {
               "instance": "/api/drivers",
               "status": 409,
               "title": "Conflict"
+            }
+            """));
+    // @spotless:on
+  }
+
+  @Test
+  @Sql(statements = """
+    INSERT INTO driver (full_name, mobile_phone, location_lat, location_lng, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
+    VALUES ('John Doe', '+6591234567', NULL, NULL, 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
+  """)
+  void updateDriverLocation_driverExists_responseNoContent() {
+    // ARRANGE
+    var driverBefore = jdbcClient.sql("""
+      SELECT *
+      FROM driver
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(driverBefore).satisfies(driver -> {
+      var createdAt = ((Timestamp) driverBefore.get("created_at")).toInstant();
+      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("location_lat", null);
+              put("location_lng", null);
+              put("status", DriverStatus.AVAILABLE.name());
+              put("age", 30);
+              put("rating", 4.5);
+              put("is_verified", false);
+              put("balance", new BigDecimal("1000.50"));
+              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("created_by", "SYSTEM");
+            }
+          });
+    });
+
+    // ACT
+    var responseSpec = restTestClient
+        .put()
+        .uri("/drivers/1/location")
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(
+            // language=JSON
+            """
+            {
+              "lat": 10.0,
+              "lng": 20.0
+            }
+            """)
+        .exchange();
+
+    // ASSERT
+    // @spotless:off
+    responseSpec
+      .expectStatus().isNoContent()
+      .expectBody().isEmpty();
+    // @spotless:on
+
+    var driverAfter = jdbcClient.sql("""
+      SELECT *
+      FROM driver
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(driverAfter).satisfies(driver -> {
+      assertThat(driverAfter.get("created_at")).isEqualTo(driverBefore.get("created_at"));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("location_lat", 10.0);
+              put("location_lng", 20.0);
+              put("status", DriverStatus.AVAILABLE.name());
+              put("age", 30);
+              put("rating", 4.5);
+              put("is_verified", false);
+              put("balance", new BigDecimal("1000.50"));
+              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("created_by", "SYSTEM");
+            }
+          });
+    });
+  }
+
+  @Test
+  void updateDriverLocation_driverNotExist_responseNotFound() {
+    // ACT
+    var responseSpec = restTestClient
+        .put()
+        .uri("/drivers/1/location")
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(
+            // language=JSON
+            """
+            {
+              "lat": 10.0,
+              "lng": 20.0
+            }
+            """)
+        .exchange();
+
+    // ASSERT
+    // @spotless:off
+    responseSpec
+      .expectStatus().isNotFound()
+      .expectBody(String.class)
+      .value(body ->
+        assertThat(JSON_TESTER.from(body))
+          .isStrictlyEqualToJson(
+            // language=JSON
+            """
+            {
+              "detail": "Driver with id 1 not found",
+              "instance": "/api/drivers/1/location",
+              "status": 404,
+              "title": "Not Found"
             }
             """));
     // @spotless:on
