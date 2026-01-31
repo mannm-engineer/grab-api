@@ -1,0 +1,32 @@
+root = true
+
+# ------------------------------------------------------------
+# Global configuration (applies to all files)
+# ------------------------------------------------------------
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+# IntelliJ: comment formatting
+ij_any_line_comment_at_first_column = false
+ij_any_line_comment_add_space = true
+ij_any_block_comment_at_first_column = false
+ij_any_block_comment_add_space = true
+
+
+# ------------------------------------------------------------
+# Java-specific settings
+# ------------------------------------------------------------
+[*.java]
+# IntelliJ: disable wildcard imports
+ij_java_class_count_to_use_import_on_demand = 99
+ij_java_names_count_to_use_import_on_demand = 99
+ij_java_packages_to_use_import_on_demand = unset
+
+# IntelliJ: import order (static first, then normal)
+ij_java_imports_layout = $*, |, *
