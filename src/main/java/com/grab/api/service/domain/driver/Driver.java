@@ -1,5 +1,6 @@
 package com.grab.api.service.domain.driver;
 
+import com.grab.api.service.domain.Location;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ public final class Driver {
         null,
         driverCreate.fullName(),
         driverCreate.mobilePhone(),
+        null,
         DriverStatus.AVAILABLE,
         driverCreate.age(),
         driverCreate.rating(),
@@ -31,6 +33,14 @@ public final class Driver {
         driverCreate.dateOfBirth(),
         driverDocuments,
         null));
+  }
+
+  public static Driver restore(DriverInformation information) {
+    return new Driver(information);
+  }
+
+  public Driver withLocation(Location location) {
+    return new Driver(information.withLocation(location));
   }
 
   public DriverInformation information() {

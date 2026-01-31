@@ -2,7 +2,9 @@ package com.grab.api.controller.api;
 
 import com.grab.api.controller.dto.DriverCreateDTO;
 import com.grab.api.controller.dto.DriverDTO;
+import com.grab.api.controller.dto.DriverLocationUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,4 +39,20 @@ public interface DriverApi {
   DriverDTO create(
       @Schema(description = "Driver creation payload") @Valid DriverCreateDTO data,
       @NotEmpty List<MultipartFile> files);
+
+  @Operation(summary = "Update driver location")
+  @ApiResponses({
+    @ApiResponse(responseCode = "204", description = "Driver location updated successfully"),
+    @ApiResponse(
+        responseCode = "404",
+        description = "Driver not found",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
+  void updateLocation(
+      @Parameter(description = "Driver ID", example = "123", required = true) String id,
+      @Schema(description = "Driver location update payload") @Valid
+          DriverLocationUpdateDTO driverLocationUpdateDTO);
 }

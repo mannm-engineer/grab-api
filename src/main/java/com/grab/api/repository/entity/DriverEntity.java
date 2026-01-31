@@ -1,9 +1,11 @@
 package com.grab.api.repository.entity;
 
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.domain.driver.DriverInformation;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +21,10 @@ public record DriverEntity(
     @Id @Column("id") @Nullable Long id,
     @Column("full_name") String fullName,
     @Column("mobile_phone") String mobilePhone,
+
+    @Embedded(onEmpty = Embedded.OnEmpty.USE_EMPTY, prefix = "location_") @Nullable
+    LocationEntity location,
+
     @Column("status") DriverStatus status,
     @Column("age") Integer age,
     @Column("rating") Double rating,
@@ -35,6 +41,7 @@ public record DriverEntity(
         id,
         fullName,
         mobilePhone,
+        location,
         status,
         age,
         rating,
@@ -53,6 +60,7 @@ public record DriverEntity(
         Optional.ofNullable(information.id()).map(Long::valueOf).orElse(null),
         information.fullName(),
         information.mobilePhone(),
+        Optional.ofNullable(information.location()).map(LocationEntity::of).orElse(null),
         information.status(),
         information.age(),
         information.rating(),
@@ -61,5 +69,25 @@ public record DriverEntity(
         information.dateOfBirth(),
         documents,
         Optional.ofNullable(information.audit()).map(AuditEntity::of).orElse(null));
+  }
+
+  public DriverInformation information() {
+    return new DriverInformation(
+        Objects.requireNonNull(id).toString(),
+        fullName,
+        mobilePhone,
+        Optional.ofNullable(location).map(LocationEntity::location).orElse(null),
+        status,
+        age,
+        rating,
+        isVerified,
+        balance,
+        dateOfBirth,
+        documents.stream().map(DriverDocumentEntity::driverDocument).toList(),
+        Objects.requireNonNull(audit).audit());
+  }
+
+  public Driver driver() {
+    return Driver.restore(information());
   }
 }

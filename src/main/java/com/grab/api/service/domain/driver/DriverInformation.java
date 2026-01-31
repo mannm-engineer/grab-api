@@ -1,6 +1,7 @@
 package com.grab.api.service.domain.driver;
 
 import com.grab.api.service.domain.Audit;
+import com.grab.api.service.domain.Location;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ public record DriverInformation(
     @Nullable String id,
     String fullName,
     String mobilePhone,
+    @Nullable Location location,
     DriverStatus status,
     Integer age,
     Double rating,
@@ -18,4 +20,21 @@ public record DriverInformation(
     BigDecimal balance,
     LocalDate dateOfBirth,
     List<DriverDocument> documents,
-    @Nullable Audit audit) {}
+    @Nullable Audit audit) {
+
+  public DriverInformation withLocation(Location location) {
+    return new DriverInformation(
+        id,
+        fullName,
+        mobilePhone,
+        location,
+        status,
+        age,
+        rating,
+        isVerified,
+        balance,
+        dateOfBirth,
+        documents,
+        audit);
+  }
+}

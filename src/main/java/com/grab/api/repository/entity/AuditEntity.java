@@ -11,4 +11,8 @@ public record AuditEntity(
   public static AuditEntity of(Audit audit) {
     return new AuditEntity(audit.createdAt(), audit.createdBy());
   }
+
+  public Audit audit() {
+    return new Audit(createdAt, createdBy);
+  }
 }

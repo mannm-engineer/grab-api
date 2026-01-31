@@ -20,9 +20,13 @@ public record DriverDocumentEntity(
     @MappedCollection(idColumn = "document_id") Set<FileEntity> files) {
 
   public static DriverDocumentEntity of(DriverDocument document) {
-    var files =
-        document.fileUrls().stream().map(FileEntity::of).collect(Collectors.toSet());
+    var files = document.fileUrls().stream().map(FileEntity::of).collect(Collectors.toSet());
     return new DriverDocumentEntity(
         null, document.type(), document.documentNumber(), document.expiryDate(), files);
+  }
+
+  public DriverDocument driverDocument() {
+    var fileUrls = files.stream().map(FileEntity::fileUrl).collect(Collectors.toList());
+    return new DriverDocument(type, documentNumber, expiryDate, fileUrls);
   }
 }
