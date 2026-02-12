@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -24,7 +25,25 @@ public record DriverEntity(
     @Column("is_verified") Boolean isVerified,
     @Column("balance") BigDecimal balance,
     @Column("date_of_birth") LocalDate dateOfBirth,
-    @MappedCollection(idColumn = "driver_id") Set<DriverDocumentEntity> documents) {
+    @MappedCollection(idColumn = "driver_id") Set<DriverDocumentEntity> documents,
+    @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) @Nullable AuditEntity audit)
+    implements AuditableEntity {
+
+  @Override
+  public AuditableEntity withAudit(AuditEntity audit) {
+    return new DriverEntity(
+        id,
+        fullName,
+        mobilePhone,
+        status,
+        age,
+        rating,
+        isVerified,
+        balance,
+        dateOfBirth,
+        documents,
+        audit);
+  }
 
   public static DriverEntity of(Driver driver) {
     var documents =
@@ -39,6 +58,7 @@ public record DriverEntity(
         driver.isVerified(),
         driver.balance(),
         driver.dateOfBirth(),
-        documents);
+        documents,
+        Optional.ofNullable(driver.audit()).map(AuditEntity::of).orElse(null));
   }
 }
