@@ -13,7 +13,10 @@ CREATE TABLE driver
   rating        DOUBLE PRECISION NOT NULL,
   is_verified   BOOLEAN          NOT NULL,
   balance       NUMERIC(12, 2)   NOT NULL,
-  date_of_birth DATE             NOT NULL
+  date_of_birth DATE             NOT NULL,
+  -- 🔍 Audit fields
+  created_at    TIMESTAMP        NOT NULL,
+  created_by    VARCHAR(100)     NOT NULL
 );
 
 -- ==================================

@@ -1,6 +1,7 @@
 package com.grab.api.controller.driver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import com.grab.api.integration.ApiTest;
 import com.grab.api.share.enumeration.DocumentType;
@@ -10,7 +11,10 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,22 +111,28 @@ class DriverApiIntegrationTest {
       WHERE id = 1
     """).query().singleRow();
 
-    assertThat(driverAfter)
-        .usingRecursiveComparison()
-        .ignoringFields("created_at")
-        .isEqualTo(new HashMap<String, Object>() {
-          {
-            put("id", 1L);
-            put("full_name", "John Doe");
-            put("mobile_phone", "+6591234567");
-            put("status", DriverStatus.AVAILABLE.name());
-            put("age", 30);
-            put("rating", 4.5);
-            put("is_verified", false);
-            put("balance", new BigDecimal("1000.50"));
-            put("date_of_birth", Date.valueOf("1990-01-15"));
-          }
-        });
+    assertThat(driverAfter).satisfies(driver -> {
+      var createdAt = ((Timestamp) driver.get("created_at")).toInstant();
+      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("status", DriverStatus.AVAILABLE.name());
+              put("age", 30);
+              put("rating", 4.5);
+              put("is_verified", false);
+              put("balance", new BigDecimal("1000.50"));
+              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("created_by", "SYSTEM");
+            }
+          });
+    });
 
     var documentAfter = jdbcClient.sql("""
       SELECT *
@@ -155,8 +165,8 @@ class DriverApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth)
-    VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15');
+    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
+    VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
   """)
   void createDriver_duplicateMobilePhone_responseConflict() {
     // ACT
