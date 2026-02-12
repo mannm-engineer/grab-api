@@ -16,4 +16,18 @@ open module com.grab.api {
   // Spring Web
   requires spring.web;
   requires spring.webmvc;
+
+  // Spring Data
+  requires spring.data.commons;
+  requires spring.data.relational;
+  requires spring.tx;
+
+  // Validation
+  requires jakarta.validation;
+
+  // API documentation
+  requires io.swagger.v3.oas.annotations;
+
+  // Logging
+  requires org.slf4j;
 }
