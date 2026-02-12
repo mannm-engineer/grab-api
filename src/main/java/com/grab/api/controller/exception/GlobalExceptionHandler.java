@@ -3,10 +3,14 @@ package com.grab.api.controller.exception;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -40,5 +44,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     problemDetail.setProperty("fieldErrors", fieldErrors);
 
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
+  }
+
+  @ExceptionHandler(DuplicateKeyException.class)
+  public ProblemDetail handleDuplicateKey(DuplicateKeyException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exist");
   }
 }
