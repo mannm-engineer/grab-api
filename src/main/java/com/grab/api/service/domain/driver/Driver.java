@@ -1,5 +1,6 @@
 package com.grab.api.service.domain.driver;
 
+import com.grab.api.service.domain.Audit;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,7 +17,8 @@ public record Driver(
     Boolean isVerified,
     BigDecimal balance,
     LocalDate dateOfBirth,
-    List<DriverDocument> documents) {
+    List<DriverDocument> documents,
+    @Nullable Audit audit) {
 
   public static Driver newDriver(
       String fullName,
@@ -37,6 +39,7 @@ public record Driver(
         isVerified,
         balance,
         dateOfBirth,
-        documents);
+        documents,
+        null);
   }
 }
