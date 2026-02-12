@@ -1,9 +1,13 @@
 package com.grab.api.controller.driver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import com.grab.api.integration.ApiTest;
 import com.grab.api.share.enumeration.DriverStatus;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,23 +79,29 @@ class DriverApiIntegrationTest {
       WHERE id = 1
     """).query().singleRow();
 
-    assertThat(driverAfter)
-        .usingRecursiveComparison()
-        .ignoringFields("created_at")
-        .isEqualTo(new HashMap<String, Object>() {
-          {
-            put("id", 1L);
-            put("full_name", "John Doe");
-            put("mobile_phone", "+6591234567");
-            put("status", DriverStatus.AVAILABLE.name());
-          }
-        });
+    assertThat(driverAfter).satisfies(driver -> {
+      var createdAt = ((Timestamp) driver.get("created_at")).toInstant();
+      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("status", DriverStatus.AVAILABLE.name());
+              put("created_by", "SYSTEM");
+            }
+          });
+    });
   }
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status)
-    VALUES ('John Doe', '+6591234567', 'AVAILABLE');
+    INSERT INTO driver (full_name, mobile_phone, status, created_at, created_by)
+    VALUES ('John Doe', '+6591234567', 'AVAILABLE', now(), 'SYSTEM');
   """)
   void createDriver_duplicateMobilePhone_responseConflict() {
     // ACT
