@@ -29,7 +29,8 @@ public final class Driver {
         driverCreate.isVerified(),
         driverCreate.balance(),
         driverCreate.dateOfBirth(),
-        driverDocuments));
+        driverDocuments,
+        null));
   }
 
   public DriverInformation information() {
