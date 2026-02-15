@@ -16,12 +16,15 @@ public class GlobalAuditCallback implements BeforeConvertCallback<Object> {
       return entity;
     }
 
+    var now = Instant.now();
+    var user = "SYSTEM";
+
     var audit = auditable.audit();
 
-    if (audit != null) {
-      return entity;
-    }
+    var updated = audit == null
+        ? new AuditEntity(now, user, null, null)
+        : new AuditEntity(audit.createdAt(), audit.createdBy(), now, user);
 
-    return auditable.withAudit(new AuditEntity(Instant.now(), "SYSTEM"));
+    return auditable.withAudit(updated);
   }
 }
