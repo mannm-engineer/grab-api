@@ -103,6 +103,8 @@ class DriverApiIntegrationTest {
               put("location_lng", null);
               put("status", DriverStatus.AVAILABLE.name());
               put("created_by", "SYSTEM");
+              put("updated_at", null);
+              put("updated_by", null);
             }
           });
     });
@@ -176,8 +178,8 @@ class DriverApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, location_lat, location_lng, status, created_at, created_by)
-    VALUES ('John Doe', '+6591234567', NULL, NULL, 'AVAILABLE', now(), 'SYSTEM');
+    INSERT INTO driver (full_name, mobile_phone, location_lat, location_lng, status, created_at, created_by, updated_at, updated_by)
+    VALUES ('John Doe', '+6591234567', NULL, NULL, 'AVAILABLE', now(), 'SYSTEM', null, null);
   """)
   void updateDriverLocation_driverExists_responseNoContent() {
     // ARRANGE
@@ -203,6 +205,8 @@ class DriverApiIntegrationTest {
               put("location_lng", null);
               put("status", DriverStatus.AVAILABLE.name());
               put("created_by", "SYSTEM");
+              put("updated_at", null);
+              put("updated_by", null);
             }
           });
     });
@@ -239,9 +243,12 @@ class DriverApiIntegrationTest {
     assertThat(driverAfter).satisfies(driver -> {
       assertThat(driverAfter.get("created_at")).isEqualTo(driverBefore.get("created_at"));
 
+      var updatedAt = ((Timestamp) driver.get("updated_at")).toInstant();
+      assertThat(updatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
       assertThat(driver)
           .usingRecursiveComparison()
-          .ignoringFields("created_at")
+          .ignoringFields("created_at", "updated_at")
           .isEqualTo(new HashMap<String, Object>() {
             {
               put("id", 1L);
@@ -251,6 +258,7 @@ class DriverApiIntegrationTest {
               put("location_lng", 20.0);
               put("status", DriverStatus.AVAILABLE.name());
               put("created_by", "SYSTEM");
+              put("updated_by", "SYSTEM");
             }
           });
     });
