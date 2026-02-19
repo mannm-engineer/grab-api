@@ -26,6 +26,9 @@ open module com.grab.api {
   requires spring.data.relational;
   requires spring.data.jdbc;
 
+  // Spring WebSocket
+  requires spring.websocket;
+
   // Validation
   requires jakarta.validation;
 
