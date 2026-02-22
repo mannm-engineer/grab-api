@@ -1,8 +1,8 @@
 package com.grab.api.repository;
 
 import com.grab.api.repository.entity.DriverEntity;
-import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.store.DriverStore;
 import java.util.Objects;
 import org.springframework.stereotype.Component;
 
