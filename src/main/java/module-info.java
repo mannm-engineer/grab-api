@@ -24,7 +24,12 @@ open module com.grab.api {
   // Spring Data
   requires spring.tx;
   requires spring.data.commons;
+  requires spring.data.jdbc;
   requires spring.data.relational;
+
+  // Spring Integration
+  requires spring.messaging;
+  requires spring.kafka;
 
   // Validation
   requires jakarta.validation;
