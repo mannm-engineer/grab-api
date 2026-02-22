@@ -41,6 +41,14 @@ class DriverApiIntegrationTest {
 
     assertThat(driverBefore).isEmpty();
 
+    var outboxEventBefore = jdbcClient.sql("""
+      SELECT *
+      FROM outbox_event
+      WHERE id = 1
+    """).query().optionalValue();
+
+    assertThat(outboxEventBefore).isEmpty();
+
     // ACT
     var responseSpec = restTestClient
         .post()
@@ -93,6 +101,30 @@ class DriverApiIntegrationTest {
               put("mobile_phone", "+6591234567");
               put("status", DriverStatus.AVAILABLE.name());
               put("created_by", "SYSTEM");
+            }
+          });
+    });
+
+    var outboxEventAfter = jdbcClient.sql("""
+      SELECT *
+      FROM outbox_event
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(outboxEventAfter).satisfies(event -> {
+      var eventCreatedAt = ((Timestamp) event.get("created_at")).toInstant();
+      assertThat(eventCreatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(event)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("topic", "driver-events");
+              put("event_key", "1");
+              put("event_type", "CREATED");
+              put("payload", "1");
             }
           });
     });

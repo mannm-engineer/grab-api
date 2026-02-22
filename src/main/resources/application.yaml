@@ -6,7 +6,12 @@ spring:
   sql:
     init:
       mode: always
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 server:
   servlet:
     context-path: /api
+
+outbox:
+  batch-size: 50

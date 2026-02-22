@@ -12,3 +12,17 @@ CREATE TABLE driver
   created_at   TIMESTAMP    NOT NULL,
   created_by   VARCHAR(100) NOT NULL
 );
+
+-- ==================================
+-- 📤 Outbox Event Table
+-- ==================================
+DROP TABLE IF EXISTS outbox_event;
+CREATE TABLE outbox_event
+(
+  id         BIGSERIAL PRIMARY KEY,
+  topic      VARCHAR(255) NOT NULL,
+  event_key  VARCHAR(255) NOT NULL,
+  event_type VARCHAR(100) NOT NULL,
+  payload    TEXT         NOT NULL,
+  created_at TIMESTAMP    NOT NULL
+);

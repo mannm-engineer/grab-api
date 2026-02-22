@@ -15,11 +15,16 @@ open module com.grab.api {
 
   // Spring Framework
   requires spring.context;
+  requires spring.beans;
   requires spring.web;
+  requires spring.tx;
+  requires spring.messaging;
+  requires spring.kafka;
 
   // Spring Data
   requires spring.data.commons;
   requires spring.data.relational;
+  requires spring.data.jdbc;
 
   // Validation
   requires jakarta.validation;
