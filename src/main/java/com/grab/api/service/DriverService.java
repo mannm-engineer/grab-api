@@ -1,15 +1,21 @@
 package com.grab.api.service;
 
+import static com.grab.api.share.enumeration.DomainEventType.CREATED;
+import static com.grab.api.share.enumeration.DomainType.DRIVER;
+
 import com.grab.api.service.domain.driver.DriverCreate;
+import com.grab.api.service.domain.event.OutboxEvent;
 import com.grab.api.service.domain.file.FileUpload;
 import com.grab.api.service.exception.InvalidInputException;
 import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.store.FileContentStore;
+import com.grab.api.service.store.OutboxEventStore;
 import java.util.LinkedHashMap;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DriverService {
@@ -18,19 +24,30 @@ public class DriverService {
 
   private final DriverStore driverStore;
   private final FileContentStore fileContentStore;
+  private final OutboxEventStore outboxEventStore;
 
-  public DriverService(DriverStore driverStore, FileContentStore fileContentStore) {
+  public DriverService(
+      DriverStore driverStore,
+      FileContentStore fileContentStore,
+      OutboxEventStore outboxEventStore) {
     this.driverStore = driverStore;
     this.fileContentStore = fileContentStore;
+    this.outboxEventStore = outboxEventStore;
   }
 
+  @Transactional
   public String create(DriverCreate driverCreate, List<FileUpload> files) {
     validateFiles(driverCreate, files);
 
     var filenameToUrl = new LinkedHashMap<String, String>();
     try {
       filenameToUrl.putAll(saveFiles(files));
-      return driverStore.create(driverCreate.driver(filenameToUrl));
+      var id = driverStore.create(driverCreate.driver(filenameToUrl));
+
+      var event = new OutboxEvent(id, DRIVER, CREATED, id);
+      outboxEventStore.create(event);
+
+      return id;
     } catch (Exception e) {
       cleanUpFiles(filenameToUrl);
       throw e;
