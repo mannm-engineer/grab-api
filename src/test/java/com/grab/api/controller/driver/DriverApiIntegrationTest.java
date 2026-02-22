@@ -52,6 +52,14 @@ class DriverApiIntegrationTest {
 
     assertThat(driverBefore).isEmpty();
 
+    var outboxEventBefore = jdbcClient.sql("""
+      SELECT *
+      FROM outbox_event
+      WHERE id = 1
+    """).query().optionalValue();
+
+    assertThat(outboxEventBefore).isEmpty();
+
     // ACT
     var jsonHeaders = new HttpHeaders();
     jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -166,6 +174,30 @@ class DriverApiIntegrationTest {
     var sentFileResource = new ClassPathResource("test-license.txt");
     assertThat(Files.readAllBytes(Path.of(storedFilePath)))
         .isEqualTo(sentFileResource.getContentAsByteArray());
+
+    var outboxEventAfter = jdbcClient.sql("""
+      SELECT *
+      FROM outbox_event
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(outboxEventAfter).satisfies(event -> {
+      var eventCreatedAt = ((Timestamp) event.get("created_at")).toInstant();
+      assertThat(eventCreatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(event)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("domain_type", "DRIVER");
+              put("event_key", "1");
+              put("event_type", "CREATED");
+              put("payload", "1");
+            }
+          });
+    });
   }
 
   @Test

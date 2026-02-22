@@ -6,6 +6,8 @@ spring:
   sql:
     init:
       mode: always
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 server:
   servlet:
@@ -15,3 +17,9 @@ app:
   storage:
     # Multi-instance: must point to shared storage, otherwise uploads from one instance are lost to others
     path: ./uploads
+  kafka:
+    topics:
+      driver-events: driver-events
+
+outbox:
+  batch-size: 50

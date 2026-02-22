@@ -13,6 +13,6 @@ import org.springframework.context.annotation.Import;
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
-@Import(TestDataSourceConfig.class)
+@Import({TestDataSourceConfig.class, TestKafkaConfig.class})
 @ExtendWith(ApiTestExtension.class)
 public @interface ApiTest {}
