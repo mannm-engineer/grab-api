@@ -1,14 +1,19 @@
 package com.grab.api.service;
 
+import static com.grab.api.share.enumeration.DomainEventType.CREATED;
+
 import com.grab.api.service.domain.driver.DriverCreate;
 import com.grab.api.service.domain.file.FileUpload;
 import com.grab.api.service.exception.InvalidInputException;
+import com.grab.api.service.model.OutboxEvent;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DriverService {
@@ -17,12 +22,22 @@ public class DriverService {
 
   private final DriverStore driverStore;
   private final FileStore fileStore;
+  private final OutboxEventStore outboxEventStore;
 
-  public DriverService(DriverStore driverStore, FileStore fileStore) {
+  private final String driverEventsTopic;
+
+  public DriverService(
+      DriverStore driverStore,
+      FileStore fileStore,
+      OutboxEventStore outboxEventStore,
+      @Value("${app.kafka.topics.driver-events}") String driverEventsTopic) {
     this.driverStore = driverStore;
     this.fileStore = fileStore;
+    this.outboxEventStore = outboxEventStore;
+    this.driverEventsTopic = driverEventsTopic;
   }
 
+  @Transactional
   public String createDriver(DriverCreate driverCreate, List<FileUpload> files) {
     validateFiles(driverCreate, files);
 
@@ -31,7 +46,9 @@ public class DriverService {
       for (var file : files) {
         filenameToUrl.put(file.filename(), fileStore.createFile(file.filename(), file.content()));
       }
-      return driverStore.createDriver(driverCreate.driver(filenameToUrl));
+      var id = driverStore.createDriver(driverCreate.driver(filenameToUrl));
+      outboxEventStore.createEvent(new OutboxEvent(driverEventsTopic, id, CREATED, id));
+      return id;
     } catch (Exception e) {
       filenameToUrl.values().forEach(url -> {
         try {
