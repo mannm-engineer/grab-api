@@ -2,14 +2,15 @@ package com.grab.api.controller;
 
 import com.grab.api.controller.dto.DriverCreateDTO;
 import com.grab.api.controller.dto.DriverDTO;
-import com.grab.api.controller.dto.LocationDTO;
+import com.grab.api.controller.dto.DriverPatchDTO;
 import com.grab.api.service.DriverService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,14 +40,11 @@ public class DriverRestController implements DriverApi {
   }
 
   @Override
-  @PutMapping("{id}/location")
+  @PatchMapping(value = "{id}", consumes = "application/merge-patch+json")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void updateDriverLocation(@PathVariable String id, @RequestBody LocationDTO locationDTO) {
-    LOGGER.info(
-        "Receive request to update location of driver {} (lat={}, lng={})",
-        id,
-        locationDTO.lat(),
-        locationDTO.lng());
-    driverService.updateDriverLocation(id, locationDTO.location());
+  public void patchDriver(
+      @PathVariable String id, @RequestBody @Valid DriverPatchDTO driverPatchDTO) {
+    LOGGER.info("Receive request to patch driver {}", id);
+    driverService.patchDriver(id, driverPatchDTO.driverPatch());
   }
 }

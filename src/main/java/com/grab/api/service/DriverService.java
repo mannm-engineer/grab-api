@@ -2,6 +2,7 @@ package com.grab.api.service;
 
 import com.grab.api.service.domain.Location;
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.domain.driver.DriverPatch;
 import com.grab.api.service.domain.driver.DriverSearchCriteria;
 import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.model.OutboxEvent;
@@ -37,12 +38,12 @@ public class DriverService {
     return id;
   }
 
-  public void updateDriverLocation(String id, Location newLocation) {
+  public void patchDriver(String id, DriverPatch patch) {
     var existing = driverStore
         .getDriver(id)
         .orElseThrow(() -> new DomainNotFoundException("Driver with id " + id + " not found"));
 
-    var updated = existing.withLocation(newLocation);
+    var updated = patch.applyTo(existing);
 
     driverStore.updateDriver(updated);
   }
