@@ -1,7 +1,7 @@
 package com.grab.api.controller.driver;
 
 import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +24,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @ApiUnitTest(controllers = DriverRestController.class)
 @MockitoBean(types = {DriverService.class, FileStore.class})
 class DriverApiInputValidationTest {
+
+  private static final MediaType MERGE_PATCH_JSON =
+      MediaType.valueOf("application/merge-patch+json");
 
   @Autowired
   private MockMvc mockMvc;
@@ -291,47 +294,43 @@ class DriverApiInputValidationTest {
         .andExpect(jsonPath("$.detail").value("Required part 'documentFiles' is not present."));
   }
 
-  static Stream<Arguments> updateDriverLocation_blankFields() {
-    return Stream.of(
-        Arguments.of(
-            "missing",
-            // language=JSON
-            """
-            {}
-            """),
-        Arguments.of(
-            "null",
-            // language=JSON
-            """
-            {
-              "lat": null,
-              "lng": null
-            }
-            """),
-        Arguments.of(
-            "empty string",
-            // language=JSON
-            """
-            {
-              "lat": "",
-              "lng": ""
-            }
-            """));
-  }
-
-  @ParameterizedTest(name = "{0}")
-  @MethodSource("updateDriverLocation_blankFields")
-  void updateDriverLocation_blankFields_responseBadRequest(String scenario, String requestBody)
-      throws Exception {
+  @Test
+  void patchDriver_locationIsNull_responseBadRequest() throws Exception {
     mockMvc
-        .perform(put("/drivers/1/location")
-            .contentType(MediaType.APPLICATION_JSON)
+        .perform(patch("/drivers/1")
+            .contentType(MERGE_PATCH_JSON)
             .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
-        // .andDo(print()) // enable this line to see the full MockMvc request/response details
+            .content(
+                // language=JSON
+                """
+                {
+                  "location": null
+                }
+                """))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
-        .andExpect(jsonPath("$.fieldErrors", hasItem("lat: must not be null")))
-        .andExpect(jsonPath("$.fieldErrors", hasItem("lng: must not be null")));
+        .andExpect(jsonPath("$.fieldErrors", hasItem("location: must not be null")));
+  }
+
+  @Test
+  void patchDriver_locationLatAndLngAreNull_responseBadRequest() throws Exception {
+    mockMvc
+        .perform(patch("/drivers/1")
+            .contentType(MERGE_PATCH_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .content(
+                // language=JSON
+                """
+                {
+                  "location": {
+                    "lat": null,
+                    "lng": null
+                  }
+                }
+                """))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("Invalid request content."))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("location.lat: must not be null")))
+        .andExpect(jsonPath("$.fieldErrors", hasItem("location.lng: must not be null")));
   }
 }

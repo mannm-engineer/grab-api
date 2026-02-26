@@ -2,7 +2,7 @@ package com.grab.api.controller;
 
 import com.grab.api.controller.dto.DriverCreateDTO;
 import com.grab.api.controller.dto.DriverDTO;
-import com.grab.api.controller.dto.LocationDTO;
+import com.grab.api.controller.dto.DriverPatchDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,13 +33,15 @@ public interface DriverApi {
       @NotEmpty List<MultipartFile> documentFiles);
 
   @Operation(
-      summary = "Update driver location",
-      description = "Update the current latitude and longitude of a driver")
+      summary = "Patch a driver",
+      description =
+          "Apply a JSON Merge Patch to update driver fields. Currently supports: location")
   @ApiResponses({
-    @ApiResponse(responseCode = "204", description = "Driver location updated successfully"),
+    @ApiResponse(responseCode = "204", description = "Driver patched successfully"),
+    @ApiResponse(responseCode = "400", description = "Invalid patch request", content = @Content),
     @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content)
   })
-  void updateDriverLocation(
+  void patchDriver(
       @Parameter(description = "Driver ID", example = "123", required = true) String id,
-      @Schema(description = "Driver location update payload") @Valid LocationDTO locationDTO);
+      @Schema(description = "JSON Merge Patch payload") @Valid DriverPatchDTO driverPatchDTO);
 }

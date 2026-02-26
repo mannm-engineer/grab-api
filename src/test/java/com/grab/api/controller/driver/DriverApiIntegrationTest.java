@@ -35,6 +35,9 @@ class DriverApiIntegrationTest {
   private static final BasicJsonTester JSON_TESTER =
       new BasicJsonTester(DriverApiIntegrationTest.class);
 
+  private static final MediaType MERGE_PATCH_JSON =
+      MediaType.valueOf("application/merge-patch+json");
+
   @Autowired
   private RestTestClient restTestClient;
 
@@ -268,7 +271,7 @@ class DriverApiIntegrationTest {
     INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
     VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
   """)
-  void updateDriverLocation_driverExists_responseNoContent() {
+  void patchDriver_updateLocation_responseNoContent() {
     // ARRANGE
     var driverBefore = jdbcClient.sql("""
       SELECT *
@@ -305,16 +308,18 @@ class DriverApiIntegrationTest {
 
     // ACT
     var responseSpec = restTestClient
-        .put()
-        .uri("/drivers/1/location")
-        .contentType(MediaType.APPLICATION_JSON)
+        .patch()
+        .uri("/drivers/1")
+        .contentType(MERGE_PATCH_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .body(
             // language=JSON
             """
             {
-              "lat": 10.0,
-              "lng": 20.0
+              "location": {
+                "lat": 10.0,
+                "lng": 20.0
+              }
             }
             """)
         .exchange();
@@ -362,19 +367,118 @@ class DriverApiIntegrationTest {
   }
 
   @Test
-  void updateDriverLocation_driverNotExist_responseNotFound() {
+  @Sql(statements = """
+    INSERT INTO driver (map_id, full_name, mobile_phone, location_lat, location_lng, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by, updated_at, updated_by)
+    VALUES ('f1cc812c-f2ce-45d8-b4e8-933bf1243178', 'John Doe', '+6591234567', 10.0, 20.0, 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM', null, null);
+  """)
+  void patchDriver_remainLocation_responseNoContent() {
+    // ARRANGE
+    var driverBefore = jdbcClient.sql("""
+      SELECT *
+      FROM driver
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(driverBefore).satisfies(driver -> {
+      var createdAt = ((Timestamp) driverBefore.get("created_at")).toInstant();
+      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("location_lat", 10.0);
+              put("location_lng", 20.0);
+              put("status", DriverStatus.AVAILABLE.name());
+              put("age", 30);
+              put("rating", 4.5);
+              put("is_verified", false);
+              put("balance", new BigDecimal("1000.50"));
+              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("created_by", "SYSTEM");
+              put("updated_at", null);
+              put("updated_by", null);
+            }
+          });
+    });
+
     // ACT
     var responseSpec = restTestClient
-        .put()
-        .uri("/drivers/1/location")
-        .contentType(MediaType.APPLICATION_JSON)
+        .patch()
+        .uri("/drivers/1")
+        .contentType(MERGE_PATCH_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(
+            // language=JSON
+            """
+            {}
+            """)
+        .exchange();
+
+    // ASSERT
+    // @spotless:off
+    responseSpec
+      .expectStatus().isNoContent()
+      .expectBody().isEmpty();
+    // @spotless:on
+
+    var driverAfter = jdbcClient.sql("""
+      SELECT *
+      FROM driver
+      WHERE id = 1
+    """).query().singleRow();
+
+    assertThat(driverAfter).satisfies(driver -> {
+      assertThat(driverAfter.get("created_at")).isEqualTo(driverBefore.get("created_at"));
+
+      var updatedAt = ((Timestamp) driver.get("updated_at")).toInstant();
+      assertThat(updatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
+
+      assertThat(driver)
+          .usingRecursiveComparison()
+          .ignoringFields("created_at", "updated_at")
+          .isEqualTo(new HashMap<String, Object>() {
+            {
+              put("id", 1L);
+              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
+              put("full_name", "John Doe");
+              put("mobile_phone", "+6591234567");
+              put("location_lat", 10.0);
+              put("location_lng", 20.0);
+              put("status", DriverStatus.AVAILABLE.name());
+              put("age", 30);
+              put("rating", 4.5);
+              put("is_verified", false);
+              put("balance", new BigDecimal("1000.50"));
+              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("created_by", "SYSTEM");
+              put("updated_by", "SYSTEM");
+            }
+          });
+    });
+  }
+
+  @Test
+  void patchDriver_driverNotExist_responseNotFound() {
+    // ACT
+    var responseSpec = restTestClient
+        .patch()
+        .uri("/drivers/1")
+        .contentType(MERGE_PATCH_JSON)
         .accept(MediaType.APPLICATION_JSON)
         .body(
             // language=JSON
             """
             {
-              "lat": 10.0,
-              "lng": 20.0
+              "location": {
+                "lat": 10.0,
+                "lng": 20.0
+              }
             }
             """)
         .exchange();
@@ -391,7 +495,7 @@ class DriverApiIntegrationTest {
             """
             {
               "detail": "Driver with id 1 not found",
-              "instance": "/api/drivers/1/location",
+              "instance": "/api/drivers/1",
               "status": 404,
               "title": "Not Found"
             }
