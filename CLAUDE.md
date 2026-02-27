@@ -13,7 +13,7 @@ mvn spotless:apply             # Auto-format code
 mvn spotless:check             # Check formatting without fixing
 ```
 
-Tests require Docker running (Testcontainers spins up PostgreSQL).
+Tests require Docker running (Testcontainers spins up PostgreSQL and Kafka).
 
 ## Architecture
 
@@ -29,8 +29,8 @@ Spring Boot 4 application (Java 25) using Spring Data JDBC and PostgreSQL. Uses 
 **Key conventions:**
 - All data objects are Java **records** (DTOs, domain models, entities)
 - Domain models use static factory methods: `Driver.newDriver(...)`, `Ride.newRide(...)`
-- Immutable updates return new instances: `driver.withNewLocation(location)`
-- DTOs have `driver()`/`ride()` methods to convert to domain; entities have `of(Domain)` and `domain()` for bidirectional conversion
+- Immutable updates return new instances: `driver.withLocation(location)`
+- DTOs have `driver()`/`ride()` methods to convert to domain; entities have `of(Domain)` and `{resource}()` (e.g., `driver()`) for bidirectional conversion
 - Naming: `*DTO` (controller), plain names (domain), `*Entity` (repository)
 - **Only generate code that is actually used.** Do not create methods, classes, or fields that have no caller in the current scope of work. If a convention template includes code that won't be needed by the operation being implemented, skip it — add it later when it's actually needed.
 
@@ -44,7 +44,7 @@ Spotless with Palantir Java Format (Google style). Runs automatically during `va
 
 ## Test Patterns
 
-- `@ApiTest` — Integration tests: full Spring context, random port, `RestTestClient`, Testcontainers PostgreSQL, auto table truncation between tests
+- `@ApiTest` — Integration tests: full Spring context, random port, `RestTestClient`, Testcontainers PostgreSQL + Kafka, auto table truncation between tests
 - `@ApiUnitTest` — Controller unit tests: `@WebMvcTest` with `MockitoBean` for services
 - Input validation tests use `@ParameterizedTest` with `@MethodSource`
 - AAA comments (Arrange/Act/Assert) in test methods
@@ -52,7 +52,8 @@ Spotless with Palantir Java Format (Google style). Runs automatically during `va
 
 ## Key Integrations
 
-- **Firebase Cloud Messaging** for push notifications (`NotificationService`)
+- **WebSocket/STOMP** for real-time push notifications (`NotificationService` sends to `/topic/user/{recipientId}`)
+- **Kafka** with transactional outbox pattern (`OutboxEventPublishScheduler` polls + publishes)
 - **Async ride dispatch** (`@Async` on `RideDispatchService.dispatchRide()`)
 - Exceptions map to RFC 7807 `ProblemDetail` via `GlobalExceptionHandler`
 
@@ -174,7 +175,7 @@ public record {Resource}DTO(@Schema(description = "...") String id) {
 ```java
 @Tag(name = "{Resource}s", description = "{Resource} management APIs")
 public interface {Resource}Api {
-  @Operation(summary = "Create a {resource}", description = "Creates a new {resource} and returns its ID")
+  @Operation(summary = "Create a {resource}", description = "Create a new {resource}")
   @ApiResponses({
     @ApiResponse(
         responseCode = "201",
