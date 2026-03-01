@@ -10,3 +10,8 @@ spring:
 server:
   servlet:
     context-path: /api
+
+app:
+  storage:
+    # Multi-instance: must point to shared storage, otherwise uploads from one instance are lost to others
+    path: ./uploads

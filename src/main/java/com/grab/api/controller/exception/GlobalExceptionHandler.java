@@ -1,5 +1,6 @@
 package com.grab.api.controller.exception;
 
+import com.grab.api.service.exception.InvalidInputException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     problemDetail.setProperty("fieldErrors", fieldErrors);
 
     return ResponseEntity.status(status).body(problemDetail);
+  }
+
+  @ExceptionHandler(InvalidInputException.class)
+  public ProblemDetail handleInvalidInputException(InvalidInputException e) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
   @ExceptionHandler(DuplicateKeyException.class)
