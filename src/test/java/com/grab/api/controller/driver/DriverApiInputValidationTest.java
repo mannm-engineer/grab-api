@@ -1,28 +1,41 @@
 package com.grab.api.controller.driver;
 
 import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.grab.api.controller.DriverRestController;
 import com.grab.api.service.DriverService;
+import com.grab.api.service.FileStore;
 import com.grab.api.unit.ApiUnitTest;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ApiUnitTest(controllers = DriverRestController.class)
-@MockitoBean(types = DriverService.class)
+@MockitoBean(types = {DriverService.class, FileStore.class})
 class DriverApiInputValidationTest {
 
   @Autowired
   private MockMvc mockMvc;
+
+  private static MockPart driverDataPart(String json) {
+    var part = new MockPart("driverData", json.getBytes());
+    part.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    return part;
+  }
+
+  private static MockPart dummyFilePart() {
+    return new MockPart("documentFiles", "dummy.txt", "dummy".getBytes());
+  }
 
   static Stream<Arguments> createDriver_blankFields() {
     return Stream.of(
@@ -57,10 +70,10 @@ class DriverApiInputValidationTest {
   void createDriver_blankFields_responseBadRequest(String scenario, String requestBody)
       throws Exception {
     mockMvc
-        .perform(post("/drivers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(requestBody))
+            .part(dummyFilePart())
+            .accept(MediaType.APPLICATION_JSON))
         // .andDo(print()) // enable this line to see the full MockMvc request/response details
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
@@ -101,10 +114,10 @@ class DriverApiInputValidationTest {
   void createDriver_invalidMobilePhone_responseBadRequest(String scenario, String requestBody)
       throws Exception {
     mockMvc
-        .perform(post("/drivers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(requestBody))
+            .part(dummyFilePart())
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
         .andExpect(jsonPath(
@@ -139,10 +152,10 @@ class DriverApiInputValidationTest {
   void createDriver_nullFields_responseBadRequest(String scenario, String requestBody)
       throws Exception {
     mockMvc
-        .perform(post("/drivers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(requestBody))
+            .part(dummyFilePart())
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
         .andExpect(jsonPath("$.fieldErrors", hasItem("age: must not be null")))
@@ -191,10 +204,10 @@ class DriverApiInputValidationTest {
   void createDriver_invalidAge_responseBadRequest(
       String scenario, String requestBody, String expectedError) throws Exception {
     mockMvc
-        .perform(post("/drivers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(requestBody))
+            .part(dummyFilePart())
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
         .andExpect(jsonPath("$.fieldErrors", hasItem(expectedError)));
@@ -239,12 +252,41 @@ class DriverApiInputValidationTest {
   void createDriver_invalidRating_responseBadRequest(
       String scenario, String requestBody, String expectedError) throws Exception {
     mockMvc
-        .perform(post("/drivers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(requestBody))
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(requestBody))
+            .part(dummyFilePart())
+            .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.detail").value("Invalid request content."))
         .andExpect(jsonPath("$.fieldErrors", hasItem(expectedError)));
+  }
+
+  @Test
+  void createDriver_missingDocumentFiles_responseBadRequest() throws Exception {
+    mockMvc
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .part(driverDataPart(
+                // language=JSON
+                """
+                {
+                  "fullName": "John Doe",
+                  "mobilePhone": "+6591234567",
+                  "age": 30,
+                  "rating": 4.5,
+                  "isVerified": false,
+                  "balance": 1000.50,
+                  "dateOfBirth": "1990-01-15",
+                  "documents": [
+                    {
+                      "type": "DRIVERS_LICENSE",
+                      "documentNumber": "S1234567A",
+                      "expiryDate": "2030-01-01"
+                    }
+                  ]
+                }
+                """))
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("Required part 'documentFiles' is not present."));
   }
 }

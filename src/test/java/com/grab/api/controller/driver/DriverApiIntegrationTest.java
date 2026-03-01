@@ -3,18 +3,27 @@ package com.grab.api.controller.driver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.grab.api.integration.ApiTest;
+import com.grab.api.share.enumeration.DocumentType;
 import com.grab.api.share.enumeration.DriverStatus;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.json.BasicJsonTester;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.util.LinkedMultiValueMap;
 
 @ApiTest
 class DriverApiIntegrationTest {
@@ -29,7 +38,7 @@ class DriverApiIntegrationTest {
   private JdbcClient jdbcClient;
 
   @Test
-  void createDriver_validRequest_responseCreated() {
+  void createDriver_validRequest_responseCreated() throws IOException {
     // ARRANGE
     var driverBefore = jdbcClient.sql("""
       SELECT *
@@ -40,12 +49,13 @@ class DriverApiIntegrationTest {
     assertThat(driverBefore).isEmpty();
 
     // ACT
-    var responseSpec = restTestClient
-        .post()
-        .uri("/drivers")
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .body(
+    var jsonHeaders = new HttpHeaders();
+    jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+    var formData = new LinkedMultiValueMap<String, Object>();
+    formData.add(
+        "driverData",
+        new HttpEntity<>(
             // language=JSON
             """
             {
@@ -55,9 +65,24 @@ class DriverApiIntegrationTest {
               "rating": 4.5,
               "isVerified": false,
               "balance": 1000.50,
-              "dateOfBirth": "1990-01-15"
+              "dateOfBirth": "1990-01-15",
+              "documents": [
+                {
+                  "type": "DRIVERS_LICENSE",
+                  "documentNumber": "S1234567A",
+                  "expiryDate": "2030-06-01"
+                }
+              ]
             }
-            """)
+            """, jsonHeaders));
+    formData.add("documentFiles", new ClassPathResource("test-license.txt"));
+
+    var responseSpec = restTestClient
+        .post()
+        .uri("/drivers")
+        .contentType(MediaType.MULTIPART_FORM_DATA)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(formData)
         .exchange();
 
     // ASSERT
@@ -98,6 +123,34 @@ class DriverApiIntegrationTest {
             put("date_of_birth", Date.valueOf("1990-01-15"));
           }
         });
+
+    var documentAfter = jdbcClient.sql("""
+      SELECT *
+      FROM driver_document
+      WHERE driver_id = 1
+    """).query().singleRow();
+
+    // @spotless:off
+    assertThat(documentAfter)
+        .usingRecursiveComparison()
+        .ignoringFields("file_url")
+        .isEqualTo(new HashMap<String, Object>() {
+          {
+            put("id", 1L);
+            put("driver_id", 1L);
+            put("type", DocumentType.DRIVERS_LICENSE.name());
+            put("document_number", "S1234567A");
+            put("expiry_date", Date.valueOf(LocalDate.of(2030, 6, 1)));
+          }
+        });
+    // @spotless:on
+
+    var storedFilePath = (String) documentAfter.get("file_url");
+    assertThat(storedFilePath).isNotBlank();
+
+    var sentFileResource = new ClassPathResource("test-license.txt");
+    assertThat(Files.readAllBytes(Path.of(storedFilePath)))
+        .isEqualTo(sentFileResource.getContentAsByteArray());
   }
 
   @Test
@@ -107,24 +160,41 @@ class DriverApiIntegrationTest {
   """)
   void createDriver_duplicateMobilePhone_responseConflict() {
     // ACT
-    var responseSpec = restTestClient
-        .post()
-        .uri("/drivers")
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .body(
+    // ACT
+    var jsonHeaders = new HttpHeaders();
+    jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+    var formData = new LinkedMultiValueMap<String, Object>();
+    formData.add(
+        "driverData",
+        new HttpEntity<>(
             // language=JSON
             """
             {
-              "fullName": "Jane Doe",
+              "fullName": "John Doe",
               "mobilePhone": "+6591234567",
-              "age": 25,
-              "rating": 3.0,
-              "isVerified": true,
-              "balance": 500.00,
-              "dateOfBirth": "1995-06-20"
+              "age": 30,
+              "rating": 4.5,
+              "isVerified": false,
+              "balance": 1000.50,
+              "dateOfBirth": "1990-01-15",
+              "documents": [
+                {
+                  "type": "DRIVERS_LICENSE",
+                  "documentNumber": "S1234567A",
+                  "expiryDate": "2030-06-01"
+                }
+              ]
             }
-            """)
+            """, jsonHeaders));
+    formData.add("documentFiles", new ClassPathResource("test-license.txt"));
+
+    var responseSpec = restTestClient
+        .post()
+        .uri("/drivers")
+        .contentType(MediaType.MULTIPART_FORM_DATA)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(formData)
         .exchange();
 
     // ASSERT

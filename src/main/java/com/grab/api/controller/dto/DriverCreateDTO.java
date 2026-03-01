@@ -2,15 +2,19 @@ package com.grab.api.controller.dto;
 
 import com.grab.api.service.domain.driver.Driver;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.IntStream;
 
 @Schema(description = "Request payload to create a new driver")
 public record DriverCreateDTO(
@@ -42,9 +46,20 @@ public record DriverCreateDTO(
     BigDecimal balance,
 
     @Schema(description = "Date of birth of the driver", example = "1990-01-15") @NotNull
-    LocalDate dateOfBirth) {
+    LocalDate dateOfBirth,
 
-  public Driver driver() {
-    return Driver.newDriver(fullName, mobilePhone, age, rating, isVerified, balance, dateOfBirth);
+    @Schema(
+        description =
+            "Metadata for each document; each entry must have a corresponding file in documentFiles")
+    @Valid
+    @NotEmpty
+    List<@Valid DriverCreateDocumentDTO> documents) {
+
+  public Driver driver(List<String> fileUrls) {
+    var documents = IntStream.range(0, this.documents.size())
+        .mapToObj(i -> this.documents.get(i).driverDocument(fileUrls.get(i)))
+        .toList();
+    return Driver.newDriver(
+        fullName, mobilePhone, age, rating, isVerified, balance, dateOfBirth, documents);
   }
 }
