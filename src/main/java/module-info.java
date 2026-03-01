@@ -15,6 +15,8 @@ open module com.grab.api {
 
   // Spring Core
   requires spring.context;
+  requires spring.beans;
+  requires spring.core;
 
   // Spring Web
   requires spring.web;
@@ -33,4 +35,8 @@ open module com.grab.api {
 
   // Logging
   requires org.slf4j;
+  requires org.apache.tomcat.embed.core;
+
+  // JSON processing
+  requires tools.jackson.databind;
 }
