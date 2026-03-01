@@ -1,5 +1,6 @@
 package com.grab.api.controller.exception;
 
+import com.grab.api.service.exception.InvalidInputException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
@@ -45,5 +46,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(DuplicateKeyException.class)
   public ProblemDetail handleDuplicateKey(DuplicateKeyException ex) {
     return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exist");
+  }
+
+  @ExceptionHandler(InvalidInputException.class)
+  public ProblemDetail handleInvalidInputException(InvalidInputException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
   }
 }

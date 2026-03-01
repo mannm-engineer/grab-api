@@ -10,3 +10,7 @@ spring:
 server:
   servlet:
     context-path: /api
+
+app:
+  storage:
+    path: ./uploads

@@ -3,6 +3,7 @@ package com.grab.api.service.domain.driver;
 import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 public record Driver(
@@ -14,7 +15,8 @@ public record Driver(
     Double rating,
     Boolean isVerified,
     BigDecimal balance,
-    LocalDate dateOfBirth) {
+    LocalDate dateOfBirth,
+    List<DriverDocument> documents) {
 
   public static Driver newDriver(
       String fullName,
@@ -23,7 +25,8 @@ public record Driver(
       Double rating,
       Boolean isVerified,
       BigDecimal balance,
-      LocalDate dateOfBirth) {
+      LocalDate dateOfBirth,
+      List<DriverDocument> documents) {
     return new Driver(
         null,
         fullName,
@@ -33,6 +36,7 @@ public record Driver(
         rating,
         isVerified,
         balance,
-        dateOfBirth);
+        dateOfBirth,
+        documents);
   }
 }
