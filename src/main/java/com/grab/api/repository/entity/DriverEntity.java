@@ -5,9 +5,12 @@ import com.grab.api.share.enumeration.DriverStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("driver")
@@ -20,10 +23,13 @@ public record DriverEntity(
     @Column("rating") Double rating,
     @Column("is_verified") Boolean isVerified,
     @Column("balance") BigDecimal balance,
-    @Column("date_of_birth") LocalDate dateOfBirth) {
+    @Column("date_of_birth") LocalDate dateOfBirth,
+    @MappedCollection(idColumn = "driver_id") Set<DriverDocumentEntity> documents) {
 
   public static DriverEntity of(Driver driver) {
     var information = driver.information();
+    var documents =
+        information.documents().stream().map(DriverDocumentEntity::of).collect(Collectors.toSet());
     return new DriverEntity(
         Optional.ofNullable(information.id()).map(Long::valueOf).orElse(null),
         information.fullName(),
@@ -33,6 +39,7 @@ public record DriverEntity(
         information.rating(),
         information.isVerified(),
         information.balance(),
-        information.dateOfBirth());
+        information.dateOfBirth(),
+        documents);
   }
 }

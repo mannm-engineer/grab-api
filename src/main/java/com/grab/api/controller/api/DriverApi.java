@@ -9,7 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Drivers", description = "Driver management APIs")
 public interface DriverApi {
@@ -32,5 +35,6 @@ public interface DriverApi {
                 schema = @Schema(implementation = ProblemDetail.class)))
   })
   DriverDTO create(
-      @Schema(description = "Driver creation payload") @Valid DriverCreateDTO driverCreateDTO);
+      @Schema(description = "Driver creation payload") @Valid DriverCreateDTO data,
+      @NotEmpty List<MultipartFile> files);
 }

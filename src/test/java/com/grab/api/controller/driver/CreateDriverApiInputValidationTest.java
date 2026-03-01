@@ -1,7 +1,6 @@
 package com.grab.api.controller.driver;
 
 import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,14 +9,17 @@ import com.grab.api.service.DriverService;
 import com.grab.api.unit.ApiInputValidationTest;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ApiInputValidationTest(controllers = DriverRestController.class)
 @MockitoBean(types = DriverService.class)
@@ -26,11 +28,22 @@ class CreateDriverApiInputValidationTest {
   @Autowired
   private MockMvc mockMvc;
 
+  private static MockPart driverDataPart(String json) {
+    var part = new MockPart("data", json.getBytes());
+    part.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+    return part;
+  }
+
+  private static MockPart dummyFilePart() {
+    return new MockPart("files", "dummy.txt", "dummy".getBytes());
+  }
+
   private ResultActions postCreateDriver(String requestBody) throws Exception {
-    return mockMvc.perform(post("/drivers")
-        .contentType(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .content(requestBody));
+    return mockMvc.perform(MockMvcRequestBuilders.multipart("/drivers")
+        .contentType(MediaType.MULTIPART_FORM_DATA)
+        .part(driverDataPart(requestBody))
+        .part(dummyFilePart())
+        .accept(MediaType.APPLICATION_JSON));
   }
 
   @Nested
@@ -174,7 +187,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15"
+                "dateOfBirth": "1990-01-15",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """,
               "age: must be greater than or equal to 18"),
@@ -189,7 +210,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15"
+                "dateOfBirth": "1990-01-15",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """,
               "age: must be less than or equal to 100"));
@@ -222,7 +251,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": -0.1,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15"
+                "dateOfBirth": "1990-01-15",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """,
               "rating: must be greater than or equal to 0.0"),
@@ -237,7 +274,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": 5.1,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15"
+                "dateOfBirth": "1990-01-15",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """,
               "rating: must be less than or equal to 5.0"));
@@ -270,7 +315,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "15/01/1990"
+                "dateOfBirth": "15/01/1990",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """),
           Arguments.of(
@@ -284,7 +337,15 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "not-a-date"
+                "dateOfBirth": "not-a-date",
+                "documents": [
+                  {
+                    "type": "DRIVERS_LICENSE",
+                    "documentNumber": "S1234567A",
+                    "expiryDate": "2030-01-01",
+                    "filenames": ["license.pdf"]
+                  }
+                ]
               }
               """));
     }
@@ -296,5 +357,36 @@ class CreateDriverApiInputValidationTest {
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.detail").value("Failed to read request"));
     }
+  }
+
+  @Test
+  void missingDocumentFiles_responseBadRequest() throws Exception {
+    mockMvc
+        .perform(MockMvcRequestBuilders.multipart("/drivers")
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .part(driverDataPart(
+                // language=JSON
+                """
+                {
+                  "fullName": "John Doe",
+                  "mobilePhone": "+6591234567",
+                  "age": 30,
+                  "rating": 4.5,
+                  "isVerified": false,
+                  "balance": 1000.50,
+                  "dateOfBirth": "1990-01-15",
+                  "documents": [
+                    {
+                      "type": "DRIVERS_LICENSE",
+                      "documentNumber": "S1234567A",
+                      "expiryDate": "2030-01-01",
+                      "filenames": ["license.pdf"]
+                    }
+                  ]
+                }
+                """))
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.detail").value("Required part 'files' is not present."));
   }
 }

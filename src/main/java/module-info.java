@@ -3,6 +3,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 open module com.grab.api {
 
+  // Required to start application
+  requires org.apache.tomcat.embed.core;
+
   // Null-safety annotations
   requires org.jspecify;
 
@@ -12,6 +15,7 @@ open module com.grab.api {
 
   // Spring Core
   requires spring.context;
+  requires spring.beans;
 
   // Spring Web
   requires spring.web;
