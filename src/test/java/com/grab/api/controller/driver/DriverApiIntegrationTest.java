@@ -1,19 +1,20 @@
 package com.grab.api.controller.driver;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.grab.api.integration.ApiTest;
-import com.grab.api.share.enumeration.DocumentType;
-import com.grab.api.share.enumeration.DriverStatus;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
@@ -22,14 +23,16 @@ import org.springframework.boot.test.json.BasicJsonTester;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.util.LinkedMultiValueMap;
+import org.wiremock.spring.ConfigureWireMock;
+import org.wiremock.spring.EnableWireMock;
+import org.wiremock.spring.InjectWireMock;
 
 @ApiTest
+@EnableWireMock(@ConfigureWireMock(name = "driver-api", baseUrlProperties = "driver.api.base-url"))
 class DriverApiIntegrationTest {
 
   private static final BasicJsonTester JSON_TESTER =
@@ -44,17 +47,12 @@ class DriverApiIntegrationTest {
   @Autowired
   private JdbcClient jdbcClient;
 
+  @InjectWireMock("driver-api")
+  private WireMockServer driverApi;
+
   @Test
-  void createDriver_validRequest_responseCreated() throws IOException {
+  void createDriver_validRequest_responseCreated() {
     // ARRANGE
-    var driverBefore = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().optionalValue();
-
-    assertThat(driverBefore).isEmpty();
-
     var outboxEventBefore = jdbcClient.sql("""
       SELECT *
       FROM outbox_event
@@ -62,6 +60,26 @@ class DriverApiIntegrationTest {
     """).query().optionalValue();
 
     assertThat(outboxEventBefore).isEmpty();
+
+    // language=JSON
+    var driverApiResponse = """
+        {
+          "id": "1",
+          "fullName": "John Doe",
+          "mobilePhone": "+6591234567",
+          "location": null,
+          "status": "AVAILABLE",
+          "age": 30,
+          "rating": 4.5,
+          "isVerified": false,
+          "balance": 1000.50,
+          "dateOfBirth": "1990-01-15",
+          "documents": [],
+          "audit": null
+        }
+        """;
+
+    driverApi.stubFor(post(urlEqualTo("/drivers")).willReturn(okJson(driverApiResponse)));
 
     // ACT
     var jsonHeaders = new HttpHeaders();
@@ -116,67 +134,6 @@ class DriverApiIntegrationTest {
             """));
     // @spotless:on
 
-    var driverAfter = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().singleRow();
-
-    assertThat(driverAfter).satisfies(driver -> {
-      var createdAt = ((Timestamp) driver.get("created_at")).toInstant();
-      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-
-      assertThat(driver)
-          .usingRecursiveComparison()
-          .ignoringFields("created_at")
-          .isEqualTo(new HashMap<String, Object>() {
-            {
-              put("id", 1L);
-              put("full_name", "John Doe");
-              put("mobile_phone", "+6591234567");
-              put("location_lat", null);
-              put("location_lng", null);
-              put("status", DriverStatus.AVAILABLE.name());
-              put("age", 30);
-              put("rating", 4.5);
-              put("is_verified", false);
-              put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
-              put("created_by", "SYSTEM");
-              put("updated_at", null);
-              put("updated_by", null);
-            }
-          });
-    });
-
-    var documentAfter = jdbcClient.sql("""
-      SELECT *
-      FROM driver_document
-      WHERE driver_id = 1
-    """).query().singleRow();
-
-    // @spotless:off
-    assertThat(documentAfter)
-        .usingRecursiveComparison()
-        .ignoringFields("file_url")
-        .isEqualTo(new HashMap<String, Object>() {
-          {
-            put("id", 1L);
-            put("driver_id", 1L);
-            put("type", DocumentType.DRIVERS_LICENSE.name());
-            put("document_number", "S1234567A");
-            put("expiry_date", Date.valueOf(LocalDate.of(2030, 6, 1)));
-          }
-        });
-    // @spotless:on
-
-    var storedFilePath = (String) documentAfter.get("file_url");
-    assertThat(storedFilePath).isNotBlank();
-
-    var sentFileResource = new ClassPathResource("test-license.txt");
-    assertThat(Files.readAllBytes(Path.of(storedFilePath)))
-        .isEqualTo(sentFileResource.getContentAsByteArray());
-
     var outboxEventAfter = jdbcClient.sql("""
       SELECT *
       FROM outbox_event
@@ -203,108 +160,28 @@ class DriverApiIntegrationTest {
   }
 
   @Test
-  @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
-    VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
-  """)
-  void createDriver_duplicateMobilePhone_responseConflict() {
-    // ACT
-    // ACT
-    var jsonHeaders = new HttpHeaders();
-    jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-    var formData = new LinkedMultiValueMap<String, Object>();
-    formData.add(
-        "driverData",
-        new HttpEntity<>(
-            // language=JSON
-            """
-            {
-              "fullName": "John Doe",
-              "mobilePhone": "+6591234567",
-              "age": 30,
-              "rating": 4.5,
-              "isVerified": false,
-              "balance": 1000.50,
-              "dateOfBirth": "1990-01-15",
-              "documents": [
-                {
-                  "type": "DRIVERS_LICENSE",
-                  "documentNumber": "S1234567A",
-                  "expiryDate": "2030-06-01"
-                }
-              ]
-            }
-            """, jsonHeaders));
-    formData.add("documentFiles", new ClassPathResource("test-license.txt"));
-
-    var responseSpec = restTestClient
-        .post()
-        .uri("/drivers")
-        .contentType(MediaType.MULTIPART_FORM_DATA)
-        .accept(MediaType.APPLICATION_JSON)
-        .body(formData)
-        .exchange();
-
-    // ASSERT
-    // @spotless:off
-    responseSpec
-      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody(String.class)
-      .value(body ->
-        assertThat(JSON_TESTER.from(body))
-          .isStrictlyEqualToJson(
-            // language=JSON
-            """
-            {
-              "detail": "Resource already exist",
-              "instance": "/api/drivers",
-              "status": 409,
-              "title": "Conflict"
-            }
-            """));
-    // @spotless:on
-  }
-
-  @Test
-  @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
-    VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
-  """)
   void patchDriver_updateLocation_responseNoContent() {
     // ARRANGE
-    var driverBefore = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().singleRow();
+    // language=JSON
+    var existingDriverJson = """
+        {
+          "id": "1",
+          "fullName": "John Doe",
+          "mobilePhone": "+6591234567",
+          "location": null,
+          "status": "AVAILABLE",
+          "age": 30,
+          "rating": 4.5,
+          "isVerified": false,
+          "balance": 1000.50,
+          "dateOfBirth": "1990-01-15",
+          "documents": [],
+          "audit": null
+        }
+        """;
 
-    assertThat(driverBefore).satisfies(driver -> {
-      var createdAt = ((Timestamp) driverBefore.get("created_at")).toInstant();
-      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-
-      assertThat(driver)
-          .usingRecursiveComparison()
-          .ignoringFields("created_at")
-          .isEqualTo(new HashMap<String, Object>() {
-            {
-              put("id", 1L);
-              put("full_name", "John Doe");
-              put("mobile_phone", "+6591234567");
-              put("location_lat", null);
-              put("location_lng", null);
-              put("status", DriverStatus.AVAILABLE.name());
-              put("age", 30);
-              put("rating", 4.5);
-              put("is_verified", false);
-              put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
-              put("created_by", "SYSTEM");
-              put("updated_at", null);
-              put("updated_by", null);
-            }
-          });
-    });
+    driverApi.stubFor(get(urlEqualTo("/drivers/1")).willReturn(okJson(existingDriverJson)));
+    driverApi.stubFor(put(urlEqualTo("/drivers/1")).willReturn(WireMock.ok()));
 
     // ACT
     var responseSpec = restTestClient
@@ -331,81 +208,56 @@ class DriverApiIntegrationTest {
       .expectBody().isEmpty();
     // @spotless:on
 
-    var driverAfter = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().singleRow();
-
-    assertThat(driverAfter).satisfies(driver -> {
-      assertThat(driverAfter.get("created_at")).isEqualTo(driverBefore.get("created_at"));
-
-      var updatedAt = ((Timestamp) driver.get("updated_at")).toInstant();
-      assertThat(updatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-
-      assertThat(driver)
-          .usingRecursiveComparison()
-          .ignoringFields("created_at", "updated_at")
-          .isEqualTo(new HashMap<String, Object>() {
-            {
-              put("id", 1L);
-              put("full_name", "John Doe");
-              put("mobile_phone", "+6591234567");
-              put("location_lat", 10.0);
-              put("location_lng", 20.0);
-              put("status", DriverStatus.AVAILABLE.name());
-              put("age", 30);
-              put("rating", 4.5);
-              put("is_verified", false);
-              put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
-              put("created_by", "SYSTEM");
-              put("updated_by", "SYSTEM");
-            }
-          });
-    });
+    driverApi.verify(putRequestedFor(urlEqualTo("/drivers/1"))
+        .withRequestBody(equalToJson(
+            // language=JSON
+            """
+                {
+                  "id": "1",
+                  "fullName": "John Doe",
+                  "mobilePhone": "+6591234567",
+                  "location": {
+                    "lat": 10.0,
+                    "lng": 20.0
+                  },
+                  "status": "AVAILABLE",
+                  "age": 30,
+                  "rating": 4.5,
+                  "isVerified": false,
+                  "balance": 1000.50,
+                  "dateOfBirth": "1990-01-15",
+                  "documents": [],
+                  "audit": null
+                }
+                """)));
   }
 
   @Test
-  @Sql(statements = """
-    INSERT INTO driver (map_id, full_name, mobile_phone, location_lat, location_lng, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by, updated_at, updated_by)
-    VALUES ('f1cc812c-f2ce-45d8-b4e8-933bf1243178', 'John Doe', '+6591234567', 10.0, 20.0, 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM', null, null);
-  """)
   void patchDriver_remainLocation_responseNoContent() {
     // ARRANGE
-    var driverBefore = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().singleRow();
+    // language=JSON
+    var existingDriverJson = """
+        {
+          "id": "1",
+          "fullName": "John Doe",
+          "mobilePhone": "+6591234567",
+          "location": {
+            "lat": 10.0,
+            "lng": 20.0
+          },
+          "status": "AVAILABLE",
+          "age": 30,
+          "rating": 4.5,
+          "isVerified": false,
+          "balance": 1000.50,
+          "dateOfBirth": "1990-01-15",
+          "documents": [],
+          "audit": null
+        }
+        """;
 
-    assertThat(driverBefore).satisfies(driver -> {
-      var createdAt = ((Timestamp) driverBefore.get("created_at")).toInstant();
-      assertThat(createdAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-
-      assertThat(driver)
-          .usingRecursiveComparison()
-          .ignoringFields("created_at")
-          .isEqualTo(new HashMap<String, Object>() {
-            {
-              put("id", 1L);
-              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
-              put("full_name", "John Doe");
-              put("mobile_phone", "+6591234567");
-              put("location_lat", 10.0);
-              put("location_lng", 20.0);
-              put("status", DriverStatus.AVAILABLE.name());
-              put("age", 30);
-              put("rating", 4.5);
-              put("is_verified", false);
-              put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
-              put("created_by", "SYSTEM");
-              put("updated_at", null);
-              put("updated_by", null);
-            }
-          });
-    });
+    driverApi.stubFor(get(urlEqualTo("/drivers/1")).willReturn(okJson(existingDriverJson)));
+    driverApi.stubFor(put(urlEqualTo("/drivers/1")).willReturn(WireMock.ok()));
 
     // ACT
     var responseSpec = restTestClient
@@ -427,44 +279,15 @@ class DriverApiIntegrationTest {
       .expectBody().isEmpty();
     // @spotless:on
 
-    var driverAfter = jdbcClient.sql("""
-      SELECT *
-      FROM driver
-      WHERE id = 1
-    """).query().singleRow();
-
-    assertThat(driverAfter).satisfies(driver -> {
-      assertThat(driverAfter.get("created_at")).isEqualTo(driverBefore.get("created_at"));
-
-      var updatedAt = ((Timestamp) driver.get("updated_at")).toInstant();
-      assertThat(updatedAt).isCloseTo(Instant.now(), within(1, ChronoUnit.SECONDS));
-
-      assertThat(driver)
-          .usingRecursiveComparison()
-          .ignoringFields("created_at", "updated_at")
-          .isEqualTo(new HashMap<String, Object>() {
-            {
-              put("id", 1L);
-              put("map_id", UUID.fromString("f1cc812c-f2ce-45d8-b4e8-933bf1243178"));
-              put("full_name", "John Doe");
-              put("mobile_phone", "+6591234567");
-              put("location_lat", 10.0);
-              put("location_lng", 20.0);
-              put("status", DriverStatus.AVAILABLE.name());
-              put("age", 30);
-              put("rating", 4.5);
-              put("is_verified", false);
-              put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
-              put("created_by", "SYSTEM");
-              put("updated_by", "SYSTEM");
-            }
-          });
-    });
+    driverApi.verify(
+        putRequestedFor(urlEqualTo("/drivers/1")).withRequestBody(equalToJson(existingDriverJson)));
   }
 
   @Test
   void patchDriver_driverNotExist_responseNotFound() {
+    // ARRANGE
+    driverApi.stubFor(get(urlEqualTo("/drivers/1")).willReturn(okJson("null")));
+
     // ACT
     var responseSpec = restTestClient
         .patch()

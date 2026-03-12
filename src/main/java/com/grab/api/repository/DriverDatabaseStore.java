@@ -7,9 +7,7 @@ import com.grab.api.service.domain.driver.DriverSearchCriteria;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.springframework.stereotype.Component;
 
-@Component
 public class DriverDatabaseStore implements DriverStore {
 
   private final DriverRepository driverRepository;

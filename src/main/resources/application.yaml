@@ -19,3 +19,7 @@ app:
 
 outbox:
   batch-size: 50
+
+driver:
+  api:
+    base-url: ${DRIVER_API_BASE_URL:http://localhost:8081}
