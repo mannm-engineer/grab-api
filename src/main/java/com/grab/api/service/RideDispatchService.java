@@ -33,7 +33,18 @@ public class RideDispatchService {
     this.objectMapper = objectMapper;
   }
 
-  public void dispatchRide(Ride ride) {
+  public void dispatchPendingRides() {
+    var pendingRides = rideStore.findByStatus(RideStatus.REQUESTED);
+    for (var ride : pendingRides) {
+      try {
+        dispatchRide(ride);
+      } catch (Exception e) {
+        LOGGER.error("Failed to dispatch ride id={}, will retry next poll", ride.id(), e);
+      }
+    }
+  }
+
+  private void dispatchRide(Ride ride) {
     LOGGER.info(
         "Dispatching ride: rideId={}, passengerId={}, pickup=({}, {}), dropoff=({}, {})",
         ride.id(),
