@@ -35,6 +35,7 @@ public class RideDispatchService {
 
   public void dispatchPendingRides() {
     var pendingRides = rideStore.findByStatus(RideStatus.REQUESTED);
+    LOGGER.info("Found {} pending rides to dispatch", pendingRides.size());
     for (var ride : pendingRides) {
       try {
         dispatchRide(ride);
