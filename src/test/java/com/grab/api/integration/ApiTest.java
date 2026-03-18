@@ -11,10 +11,8 @@ import org.springframework.context.annotation.Import;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.task.scheduling.enabled=false")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
-@Import({TestDataSourceConfig.class, TestKafkaConfig.class})
+@Import({TestDataSourceConfig.class, TestKafkaConfig.class, TestSchedulingConfig.class})
 @ExtendWith(ApiTestExtension.class)
 public @interface ApiTest {}
