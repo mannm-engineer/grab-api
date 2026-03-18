@@ -23,11 +23,14 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 @ApiTest
 class RideDispatchSchedulerIntegrationTest {
 
-  @Autowired private RideDispatchScheduler rideDispatchScheduler;
+  @Autowired
+  private RideDispatchScheduler rideDispatchScheduler;
 
-  @Autowired private JdbcClient jdbcClient;
+  @Autowired
+  private JdbcClient jdbcClient;
 
-  @LocalServerPort private int port;
+  @LocalServerPort
+  private int port;
 
   // @spotless:off
   @Test
@@ -65,9 +68,7 @@ class RideDispatchSchedulerIntegrationTest {
   }
 
   @Test
-  @Sql(
-      statements =
-          """
+  @Sql(statements = """
       INSERT INTO ride (passenger_id, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, status)
       VALUES ('28088f63-d3a6-4714-913d-940a084df57e', 10.5, 20.5, 30.0, 40.0, 'REQUESTED');
       """)
@@ -121,7 +122,9 @@ class RideDispatchSchedulerIntegrationTest {
   private StompSession connectStomp() throws Exception {
     var stompClient = new WebSocketStompClient(new StandardWebSocketClient());
     var url = "ws://localhost:" + port + "/api/ws";
-    return stompClient.connectAsync(url, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
+    return stompClient
+        .connectAsync(url, new StompSessionHandlerAdapter() {})
+        .get(5, TimeUnit.SECONDS);
   }
 
   private static class TestStompFrameHandler implements StompFrameHandler {
@@ -134,12 +137,12 @@ class RideDispatchSchedulerIntegrationTest {
 
     @Override
     public Type getPayloadType(StompHeaders headers) {
-      return String.class;
+      return byte[].class;
     }
 
     @Override
     public void handleFrame(StompHeaders headers, Object payload) {
-      messages.add((String) payload);
+      messages.add(new String((byte[]) payload));
     }
   }
 }
