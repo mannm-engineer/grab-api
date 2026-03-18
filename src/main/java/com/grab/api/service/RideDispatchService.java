@@ -8,7 +8,6 @@ import com.grab.api.service.exception.DomainNotFoundException;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -19,19 +18,28 @@ public class RideDispatchService {
 
   private final DriverService driverService;
   private final NotificationService notificationService;
+  private final RideStore rideStore;
   private final ObjectMapper objectMapper;
 
   public RideDispatchService(
       DriverService driverService,
       NotificationService notificationService,
+      RideStore rideStore,
       ObjectMapper objectMapper) {
     this.driverService = driverService;
     this.notificationService = notificationService;
+    this.rideStore = rideStore;
     this.objectMapper = objectMapper;
   }
 
-  @Async
-  public void dispatchRide(Ride ride) {
+  public void dispatchRide(String rideId) {
+    var ride = rideStore
+        .getRide(rideId)
+        .orElseThrow(() -> new DomainNotFoundException("Ride with id " + rideId + " not found"));
+    dispatchRide(ride);
+  }
+
+  private void dispatchRide(Ride ride) {
     LOGGER.info(
         "Dispatching ride: rideId={}, passengerId={}, pickup=({}, {}), dropoff=({}, {})",
         ride.id(),

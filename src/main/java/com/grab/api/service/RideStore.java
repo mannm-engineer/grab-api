@@ -1,8 +1,11 @@
 package com.grab.api.service;
 
 import com.grab.api.service.domain.ride.Ride;
+import java.util.Optional;
 
 public interface RideStore {
 
-  void createRide(Ride ride);
+  String createRide(Ride ride);
+
+  Optional<Ride> getRide(String id);
 }

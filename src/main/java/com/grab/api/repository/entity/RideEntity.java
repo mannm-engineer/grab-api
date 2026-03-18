@@ -2,6 +2,7 @@ package com.grab.api.repository.entity;
 
 import com.grab.api.service.domain.ride.Ride;
 import com.grab.api.share.enumeration.RideStatus;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -30,5 +31,14 @@ public record RideEntity(
         LocationEntity.of(ride.pickupLocation()),
         LocationEntity.of(ride.dropoffLocation()),
         ride.status());
+  }
+
+  public Ride ride() {
+    return new Ride(
+        Objects.requireNonNull(id).toString(),
+        passengerId.toString(),
+        pickupLocation.location(),
+        dropoffLocation.location(),
+        status);
   }
 }
