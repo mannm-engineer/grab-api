@@ -15,4 +15,8 @@ public record Ride(
       String passengerId, Location pickupLocation, Location dropoffLocation) {
     return new Ride(null, passengerId, pickupLocation, dropoffLocation, RideStatus.REQUESTED);
   }
+
+  public Ride withStatus(RideStatus newStatus) {
+    return new Ride(id, passengerId, pickupLocation, dropoffLocation, newStatus);
+  }
 }

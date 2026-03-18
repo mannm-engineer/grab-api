@@ -7,16 +7,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class RideService {
 
-  private final RideDispatchService rideDispatchService;
   private final RideStore rideStore;
 
-  public RideService(RideDispatchService rideDispatchService, RideStore rideStore) {
-    this.rideDispatchService = rideDispatchService;
+  public RideService(RideStore rideStore) {
     this.rideStore = rideStore;
   }
 
   public void create(Ride ride) {
     rideStore.create(ride);
-    rideDispatchService.dispatch(ride);
   }
 }
