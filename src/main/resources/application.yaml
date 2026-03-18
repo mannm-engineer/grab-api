@@ -8,8 +8,6 @@ spring:
       mode: always
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: grab-api
 
 server:
   servlet:
@@ -21,7 +19,6 @@ app:
   kafka:
     topics:
       driver-events: driver-events
-      ride-events: ride-events
 
 outbox:
   batch-size: 50

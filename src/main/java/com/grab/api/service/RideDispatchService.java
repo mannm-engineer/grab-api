@@ -5,6 +5,7 @@ import com.grab.api.service.domain.driver.Driver;
 import com.grab.api.service.domain.notification.Notification;
 import com.grab.api.service.domain.ride.Ride;
 import com.grab.api.service.exception.DomainNotFoundException;
+import com.grab.api.share.enumeration.RideStatus;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +33,7 @@ public class RideDispatchService {
     this.objectMapper = objectMapper;
   }
 
-  public void dispatchRide(String rideId) {
-    var ride = rideStore
-        .getRide(rideId)
-        .orElseThrow(() -> new DomainNotFoundException("Ride with id " + rideId + " not found"));
-    dispatchRide(ride);
-  }
-
-  private void dispatchRide(Ride ride) {
+  public void dispatchRide(Ride ride) {
     LOGGER.info(
         "Dispatching ride: rideId={}, passengerId={}, pickup=({}, {}), dropoff=({}, {})",
         ride.id(),
@@ -61,6 +55,7 @@ public class RideDispatchService {
         ride.id());
 
     sendRide(driver, ride);
+    rideStore.updateRide(ride.withStatus(RideStatus.DISPATCHED));
   }
 
   private void sendRide(Driver driver, Ride ride) {
