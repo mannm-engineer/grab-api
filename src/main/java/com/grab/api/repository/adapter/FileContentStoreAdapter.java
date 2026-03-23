@@ -19,6 +19,15 @@ public class FileContentStoreAdapter implements FileContentStore {
   }
 
   @Override
+  public InputStream findByUrl(String url) {
+    try {
+      return Files.newInputStream(Path.of(url));
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to read file: " + url, e);
+    }
+  }
+
+  @Override
   public String create(String filename, InputStream content) {
     try {
       var dateDir = storageRoot.resolve(java.time.LocalDate.now().toString());

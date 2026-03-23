@@ -5,7 +5,7 @@ import static com.grab.api.share.enumeration.DomainType.DRIVER;
 
 import com.grab.api.service.domain.driver.DriverCreate;
 import com.grab.api.service.domain.event.OutboxEvent;
-import com.grab.api.service.domain.file.FileUpload;
+import com.grab.api.service.domain.file.NewFile;
 import com.grab.api.service.exception.InvalidInputException;
 import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.store.FileContentStore;
@@ -36,7 +36,7 @@ public class DriverService {
   }
 
   @Transactional
-  public String create(DriverCreate driverCreate, List<FileUpload> files) {
+  public String create(DriverCreate driverCreate, List<NewFile> files) {
     validateFiles(driverCreate, files);
 
     var filenameToUrl = new LinkedHashMap<String, String>();
@@ -54,12 +54,12 @@ public class DriverService {
     }
   }
 
-  private void validateFiles(DriverCreate driverCreate, List<FileUpload> files) {
+  private void validateFiles(DriverCreate driverCreate, List<NewFile> files) {
     var metadataFileNames = driverCreate.documents().stream()
         .flatMap(d -> d.filenames().stream())
         .sorted()
         .toList();
-    var uploadFileNames = files.stream().map(FileUpload::filename).sorted().toList();
+    var uploadFileNames = files.stream().map(NewFile::filename).sorted().toList();
 
     if (!metadataFileNames.equals(uploadFileNames)) {
       throw new InvalidInputException("Uploaded files do not match declared documents. Declared: "
@@ -69,7 +69,7 @@ public class DriverService {
     }
   }
 
-  private LinkedHashMap<String, String> saveFiles(List<FileUpload> files) {
+  private LinkedHashMap<String, String> saveFiles(List<NewFile> files) {
     var filenameToUrl = new LinkedHashMap<String, String>();
 
     for (var file : files) {

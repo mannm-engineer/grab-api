@@ -1,6 +1,6 @@
 package com.grab.api.controller.converter;
 
-import com.grab.api.service.domain.file.FileUpload;
+import com.grab.api.service.domain.file.NewFile;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -11,11 +11,11 @@ public final class MultipartFileConverter {
 
   private MultipartFileConverter() {}
 
-  public static List<FileUpload> toFileUploads(List<MultipartFile> files) {
+  public static List<NewFile> toFileUploads(List<MultipartFile> files) {
     return files.stream().map(MultipartFileConverter::toFileUpload).toList();
   }
 
-  private static FileUpload toFileUpload(MultipartFile file) {
+  private static NewFile toFileUpload(MultipartFile file) {
     var filename = file.getOriginalFilename();
 
     if (filename == null || filename.isBlank()) {
@@ -24,7 +24,7 @@ public final class MultipartFileConverter {
     }
 
     try {
-      return new FileUpload(filename, file.getInputStream());
+      return new NewFile(filename, file.getInputStream());
     } catch (IOException e) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Failed to read uploaded file: " + filename, e);

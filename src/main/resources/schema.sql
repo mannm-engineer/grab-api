@@ -1,7 +1,7 @@
 -- ==================================
 -- 🏎️ Driver Table
 -- ==================================
-DROP TABLE IF EXISTS driver_document_file;
+DROP TABLE IF EXISTS file;
 DROP TABLE IF EXISTS driver_document;
 DROP TABLE IF EXISTS driver;
 CREATE TABLE driver
@@ -33,9 +33,9 @@ CREATE TABLE driver_document
 );
 
 -- ==================================
--- 📎 Driver Document File Table
+-- 📎 File Table
 -- ==================================
-CREATE TABLE driver_document_file
+CREATE TABLE file
 (
   id          BIGSERIAL PRIMARY KEY,
   document_id BIGINT       NOT NULL REFERENCES driver_document (id),

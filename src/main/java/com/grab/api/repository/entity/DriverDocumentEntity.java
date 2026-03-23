@@ -17,11 +17,11 @@ public record DriverDocumentEntity(
     @Column("type") DocumentType type,
     @Column("document_number") String documentNumber,
     @Column("expiry_date") LocalDate expiryDate,
-    @MappedCollection(idColumn = "document_id") Set<DriverDocumentFileEntity> files) {
+    @MappedCollection(idColumn = "document_id") Set<FileEntity> files) {
 
   public static DriverDocumentEntity of(DriverDocument document) {
     var files =
-        document.fileUrls().stream().map(DriverDocumentFileEntity::of).collect(Collectors.toSet());
+        document.fileUrls().stream().map(FileEntity::of).collect(Collectors.toSet());
     return new DriverDocumentEntity(
         null, document.type(), document.documentNumber(), document.expiryDate(), files);
   }

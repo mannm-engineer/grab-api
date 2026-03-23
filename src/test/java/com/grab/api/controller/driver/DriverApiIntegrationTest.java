@@ -164,7 +164,7 @@ class DriverApiIntegrationTest {
 
     var documentFileAfter = jdbcClient.sql("""
       SELECT *
-      FROM driver_document_file
+      FROM file
       WHERE document_id = 1
     """).query().singleRow();
 
