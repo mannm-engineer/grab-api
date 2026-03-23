@@ -19,6 +19,15 @@ public class FileLocalStore implements FileStore {
   }
 
   @Override
+  public InputStream getFile(String url) {
+    try {
+      return Files.newInputStream(Path.of(url));
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to read file: " + url, e);
+    }
+  }
+
+  @Override
   public String createFile(String filename, InputStream content) {
     try {
       Files.createDirectories(storageRoot);

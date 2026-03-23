@@ -8,9 +8,14 @@ import com.grab.api.service.DriverService;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -42,5 +47,18 @@ public class DriverRestController implements DriverApi {
     LOGGER.info("Driver created with id={}", id);
 
     return DriverDTO.of(id);
+  }
+
+  @Override
+  @GetMapping("/document-files/{fileId}")
+  public ResponseEntity<Resource> downloadDocumentFile(@PathVariable String fileId) {
+
+    LOGGER.info("Receive request to download file with id={}", fileId);
+
+    var content = driverService.getDocumentFile(fileId);
+
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .body(new InputStreamResource(content));
   }
 }

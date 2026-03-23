@@ -1,5 +1,6 @@
 package com.grab.api.controller.exception;
 
+import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.exception.InvalidInputException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DuplicateKeyException;
@@ -43,9 +44,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return handleExceptionInternal(ex, problemDetail, headers, status, request);
   }
 
+  @ExceptionHandler(DomainNotFoundException.class)
+  public ProblemDetail handleDomainNotFoundException(DomainNotFoundException ex) {
+    return ProblemDetail.forStatusAndDetail(
+        HttpStatus.NOT_FOUND, "Resource with id " + ex.getDomainId() + " not found.");
+  }
+
   @ExceptionHandler(DuplicateKeyException.class)
   public ProblemDetail handleDuplicateKey(DuplicateKeyException ex) {
-    return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exist");
+    return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exist.");
   }
 
   @ExceptionHandler(InvalidInputException.class)

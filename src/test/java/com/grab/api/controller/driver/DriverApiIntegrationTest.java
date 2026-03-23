@@ -255,10 +255,96 @@ class DriverApiIntegrationTest {
             // language=JSON
             """
             {
-              "detail": "Resource already exist",
+              "detail": "Resource already exist.",
               "instance": "/api/drivers",
               "status": 409,
               "title": "Conflict"
+            }
+            """));
+    // @spotless:on
+  }
+
+  @Test
+  void downloadDocumentFile_existingFile_responseOk() throws IOException {
+    // ARRANGE — create a driver with a document file first
+    var jsonHeaders = new HttpHeaders();
+    jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+    var formData = new LinkedMultiValueMap<String, Object>();
+    formData.add(
+        "data",
+        new HttpEntity<>(
+            // language=JSON
+            """
+            {
+              "fullName": "Jane Doe",
+              "mobilePhone": "+6599887766",
+              "age": 25,
+              "rating": 4.0,
+              "isVerified": true,
+              "balance": 500.00,
+              "dateOfBirth": "1995-05-20",
+              "documents": [
+                {
+                  "type": "NATIONAL_ID",
+                  "documentNumber": "N1234567B",
+                  "expiryDate": "2030-12-31",
+                  "filenames": ["test-license.txt"]
+                }
+              ]
+            }
+            """, jsonHeaders));
+    formData.add("files", new ClassPathResource("test-license.txt"));
+
+    restTestClient
+        .post()
+        .uri("/drivers")
+        .contentType(MediaType.MULTIPART_FORM_DATA)
+        .accept(MediaType.APPLICATION_JSON)
+        .body(formData)
+        .exchange()
+        .expectStatus()
+        .isCreated();
+
+    // ACT
+    var responseSpec = restTestClient.get().uri("/drivers/document-files/1").exchange();
+
+    // ASSERT
+    var expectedContent = new ClassPathResource("test-license.txt").getContentAsByteArray();
+
+    // @spotless:off
+    responseSpec
+      .expectStatus().isOk()
+      .expectHeader().contentType(MediaType.APPLICATION_OCTET_STREAM)
+      .expectBody(byte[].class)
+      .value(body -> assertThat(body).isEqualTo(expectedContent));
+    // @spotless:on
+  }
+
+  @Test
+  void downloadDocumentFile_nonExistingFile_responseNotFound() {
+    // ACT
+    var responseSpec = restTestClient
+        .get()
+        .uri("/drivers/document-files/999")
+        .accept(MediaType.APPLICATION_JSON)
+        .exchange();
+
+    // ASSERT
+    // @spotless:off
+    responseSpec
+      .expectStatus().isNotFound()
+      .expectBody(String.class)
+      .value(body ->
+        assertThat(JSON_TESTER.from(body))
+          .isStrictlyEqualToJson(
+            // language=JSON
+            """
+            {
+              "detail": "Resource with id 999 not found.",
+              "instance": "/api/drivers/document-files/999",
+              "status": 404,
+              "title": "Not Found"
             }
             """));
     // @spotless:on
