@@ -13,9 +13,13 @@ import org.springframework.stereotype.Component;
 public class DriverDatabaseStore implements DriverStore {
 
   private final DriverRepository driverRepository;
+  private final DriverDocumentFileRepository driverDocumentFileRepository;
 
-  public DriverDatabaseStore(DriverRepository driverRepository) {
+  public DriverDatabaseStore(
+      DriverRepository driverRepository,
+      DriverDocumentFileRepository driverDocumentFileRepository) {
     this.driverRepository = driverRepository;
+    this.driverDocumentFileRepository = driverDocumentFileRepository;
   }
 
   @Override
@@ -35,6 +39,11 @@ public class DriverDatabaseStore implements DriverStore {
   @Override
   public Optional<Driver> getDriver(String id) {
     return driverRepository.findById(Long.valueOf(id)).map(DriverEntity::driver);
+  }
+
+  @Override
+  public Optional<String> getDocumentFileUrl(String fileId) {
+    return driverDocumentFileRepository.findFileUrlById(Long.parseLong(fileId));
   }
 
   @Override

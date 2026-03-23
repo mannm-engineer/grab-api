@@ -13,11 +13,29 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Drivers", description = "Driver management APIs")
 public interface DriverApi {
+
+  @Operation(summary = "Download a driver document file")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "File downloaded successfully",
+        content = @Content(mediaType = "application/octet-stream")),
+    @ApiResponse(
+        responseCode = "404",
+        description = "Document file not found",
+        content =
+            @Content(
+                mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemDetail.class)))
+  })
+  ResponseEntity<Resource> downloadDocumentFile(String fileId);
 
   @Operation(summary = "Create a driver")
   @ApiResponses({

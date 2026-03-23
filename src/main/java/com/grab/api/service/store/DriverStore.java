@@ -11,6 +11,8 @@ public interface DriverStore {
 
   Optional<Driver> getDriver(String id);
 
+  Optional<String> getDocumentFileUrl(String fileId);
+
   String createDriver(Driver driver);
 
   void updateDriver(Driver driver);

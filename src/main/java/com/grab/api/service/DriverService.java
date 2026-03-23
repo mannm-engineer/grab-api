@@ -14,6 +14,7 @@ import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.store.FileStore;
 import com.grab.api.service.store.OutboxEventStore;
 import com.grab.api.share.enumeration.DriverStatus;
+import java.io.InputStream;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -46,6 +47,14 @@ public class DriverService {
     this.fileStore = fileStore;
     this.outboxEventStore = outboxEventStore;
     this.driverEventsTopic = driverEventsTopic;
+  }
+
+  public InputStream getDocumentFile(String fileId) {
+    var fileUrl = driverStore
+        .getDocumentFileUrl(fileId)
+        .orElseThrow(() -> new DomainNotFoundException("Document file not found"));
+
+    return fileStore.getFile(fileUrl);
   }
 
   public Optional<Driver> findNearestDriver(Location pickupLocation) {
