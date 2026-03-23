@@ -1,5 +1,6 @@
 package com.grab.api.controller.exception;
 
+import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.exception.InvalidInputException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
@@ -44,6 +45,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(InvalidInputException.class)
   public ProblemDetail handleInvalidInputException(InvalidInputException e) {
     return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+  }
+
+  @ExceptionHandler(DomainNotFoundException.class)
+  public ProblemDetail handleDomainNotFoundException(DomainNotFoundException e) {
+    return ProblemDetail.forStatusAndDetail(
+        HttpStatus.NOT_FOUND, "Resource with id " + e.getDomainId() + " not found.");
   }
 
   @ExceptionHandler(DuplicateKeyException.class)

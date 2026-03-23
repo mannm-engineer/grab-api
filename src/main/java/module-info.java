@@ -15,6 +15,7 @@ open module com.grab.api {
 
   // Spring Core
   requires spring.context;
+  requires spring.core;
   requires spring.beans;
 
   // Spring Web
