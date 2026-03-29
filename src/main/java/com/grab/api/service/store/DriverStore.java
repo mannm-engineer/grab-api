@@ -1,9 +1,14 @@
 package com.grab.api.service.store;
 
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.domain.driver.DriverInformation;
+import com.grab.api.service.domain.driver.DriverSearchCriteria;
+import java.util.List;
 import java.util.Optional;
 
 public interface DriverStore {
+
+  List<DriverInformation> find(DriverSearchCriteria criteria);
 
   Optional<Driver> get(String id);
 

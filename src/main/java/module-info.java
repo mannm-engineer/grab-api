@@ -43,4 +43,7 @@ open module com.grab.api {
 
   // Logging
   requires org.slf4j;
+
+  // JSON processing
+  requires tools.jackson.databind;
 }

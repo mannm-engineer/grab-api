@@ -6,12 +6,18 @@ import static com.grab.api.share.enumeration.DomainType.DRIVER;
 import com.grab.api.service.domain.Location;
 import com.grab.api.service.domain.driver.Driver;
 import com.grab.api.service.domain.driver.DriverCreate;
+import com.grab.api.service.domain.driver.DriverInformation;
+import com.grab.api.service.domain.driver.DriverSearchCriteria;
 import com.grab.api.service.domain.event.OutboxEvent;
 import com.grab.api.service.exception.DomainNotFoundException;
 import com.grab.api.service.store.DriverStore;
 import com.grab.api.service.store.FileContentStore;
 import com.grab.api.service.store.OutboxEventStore;
+import com.grab.api.share.enumeration.DriverStatus;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.Objects;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,6 +39,13 @@ public class DriverService {
     this.driverStore = driverStore;
     this.fileContentStore = fileContentStore;
     this.outboxEventStore = outboxEventStore;
+  }
+
+  public Optional<DriverInformation> findNearest(Location pickupLocation) {
+    var criteria = new DriverSearchCriteria(DriverStatus.AVAILABLE, true);
+    return driverStore.find(criteria).stream()
+        .min(Comparator.comparing(
+            information -> Objects.requireNonNull(information.location()).distanceTo(pickupLocation)));
   }
 
   @Transactional

@@ -3,7 +3,10 @@ package com.grab.api.repository.adapter;
 import com.grab.api.repository.DriverRepository;
 import com.grab.api.repository.entity.DriverEntity;
 import com.grab.api.service.domain.driver.Driver;
+import com.grab.api.service.domain.driver.DriverInformation;
+import com.grab.api.service.domain.driver.DriverSearchCriteria;
 import com.grab.api.service.store.DriverStore;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -15,6 +18,20 @@ public class DriverStoreAdapter implements DriverStore {
 
   public DriverStoreAdapter(DriverRepository driverRepository) {
     this.driverRepository = driverRepository;
+  }
+
+  @Override
+  public List<DriverInformation> find(DriverSearchCriteria criteria) {
+    var stream = driverRepository.findAll().stream();
+
+    if (criteria.status() != null) {
+      stream = stream.filter(entity -> entity.status() == criteria.status());
+    }
+    if (criteria.hasLocation()) {
+      stream = stream.filter(entity -> entity.location() != null);
+    }
+
+    return stream.map(DriverEntity::information).toList();
   }
 
   @Override
