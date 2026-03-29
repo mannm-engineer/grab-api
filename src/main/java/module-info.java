@@ -32,6 +32,9 @@ open module com.grab.api {
   requires spring.messaging;
   requires spring.kafka;
 
+  // Spring WebSocket
+  requires spring.websocket;
+
   // Validation
   requires jakarta.validation;
 
