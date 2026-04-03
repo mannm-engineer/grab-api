@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code → Transistor · Live Trace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e14;
+    --bg-2: #141a23;
+    --grid: #1a2230;
+    --line: #2a3548;
+    --text: #c9d4e3;
+    --text-dim: #6b7a90;
+    --accent: #4fc3f7;
+    --accent-2: #ffb74d;
+    --accent-3: #81c784;
+    --accent-4: #f06292;
+    --node-fill: #343a40;
+    --wire-off: #2a3548;
+    --wire-on: #4fc3f7;
+    --wire-glow: #81d4fa;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    padding: 16px 28px;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: rgba(10, 14, 20, 0.92);
+    backdrop-filter: blur(8px);
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo {
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--accent);
+    border-radius: 4px;
+    display: grid; place-items: center;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .brand-text { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .brand-sub  { color: var(--text-dim); font-size: 11px; letter-spacing: 0.15em; }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-3);
+    animation: pulse 1.4s infinite;
+  }
+  .live-dot.paused {
+    background: var(--accent-2);
+    animation: none;
+  }
+  .pause-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    padding: 6px 12px;
+    margin-right: 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pause-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .pause-btn.paused {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .layer {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    position: relative;
+    opacity: 0.35;
+    transform: scale(0.99);
+    transition: opacity 0.4s, transform 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .layer.active {
+    opacity: 1;
+    transform: scale(1);
+    border-color: var(--accent);
+    box-shadow: 0 0 36px rgba(79, 195, 247, 0.25);
+  }
+  .layer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-items: stretch;
+    position: relative;
+  }
+  .link-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .link-overlay.show { opacity: 1; }
+  .link-path {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-dasharray: 6 5;
+    animation: dash-flow 1.2s linear infinite;
+  }
+  .link-path.xor { stroke: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+  .link-path.and { stroke: var(--accent-2); filter: drop-shadow(0 0 4px var(--accent-2)); }
+  .link-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .link-label.xor { fill: var(--accent); }
+  .link-label.and { fill: var(--accent-2); }
+  @keyframes dash-flow {
+    to { stroke-dashoffset: -22; }
+  }
+  .layer-row > .layer { margin-bottom: 14px; }
+  @media (max-width: 900px) {
+    .layer-row { grid-template-columns: 1fr; }
+  }
+
+  .layer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .layer-tag {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .layer-tag .num { color: var(--accent-2); margin-right: 8px; }
+  .layer-title {
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .layer-status {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+  }
+  .layer.active .layer-status { color: var(--accent); }
+
+  /* Arrow between layers */
+  .arrow-down {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    line-height: 1;
+    padding: 8px 0;
+    margin: 2px 0 16px 0;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .arrow-down.active {
+    color: var(--accent);
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(79,195,247,0.0) 30%,
+      rgba(79,195,247,0.35) 50%,
+      rgba(79,195,247,0.0) 70%,
+      transparent 100%);
+    background-size: 200% 100%;
+    animation: flow 1.2s linear infinite;
+  }
+  @keyframes flow {
+    0%   { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+
+  /* Progress bar in header */
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 18px;
+  }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+  .progress-step .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    transition: all 0.3s;
+  }
+  .progress-step.active { color: var(--accent); }
+  .progress-step.active .dot {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .progress-step.done .dot {
+    border-color: var(--accent-3);
+    background: var(--accent-3);
+  }
+  .progress-sep {
+    width: 18px;
+    height: 1px;
+    background: var(--line);
+  }
+  .progress-sep.done { background: var(--accent-3); }
+  @media (max-width: 768px) {
+    .progress-step span.label { display: none; }
+    .progress-sep { width: 10px; }
+  }
+
+  /* LAYER 1: CODE */
+  .code-block {
+    font-size: 16px;
+    line-height: 1.8;
+    padding: 8px 0;
+  }
+  .code-line {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    transition: background 0.3s;
+  }
+  .code-line.highlight {
+    background: rgba(79, 195, 247, 0.08);
+  }
+  .code-line-num { color: var(--text-dim); font-size: 12px; width: 20px; }
+  .kw   { color: var(--accent-4); }
+  .var  { color: var(--accent);   }
+  .op   { color: var(--accent-2); }
+  .num  { color: var(--accent-3); }
+  .punc { color: var(--text-dim); }
+
+  /* LAYER 2: INSTRUCTIONS */
+  .asm-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .asm-line, .bc-line, .jit-line {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 3px;
+    transition: all 0.3s;
+    opacity: 0.4;
+  }
+  .asm-line.active, .bc-line.active, .jit-line.active {
+    opacity: 1;
+    background: rgba(79, 195, 247, 0.08);
+    color: var(--text);
+  }
+  .asm-line.done, .bc-line.done, .jit-line.done { opacity: 0.7; }
+  .asm-addr { color: var(--text-dim); font-size: 11px; min-width: 60px; }
+  .asm-op   { color: var(--accent-2); min-width: 60px; font-weight: 600; }
+  .asm-args { color: var(--text); }
+  .asm-comment { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+
+  /* LAYER 3: GATES */
+  .gates-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .gates-svg-wrap {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+  }
+  .gates-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+  .info-row .label { color: var(--text-dim); letter-spacing: 0.1em; }
+  .info-row .value { color: var(--accent-3); font-weight: 600; }
+  .bit-display {
+    font-family: 'Geist Mono', monospace;
+    letter-spacing: 0.2em;
+    font-size: 14px;
+  }
+  .bit-on  { color: var(--accent); }
+  .bit-off { color: var(--text-dim); }
+
+  /* Half-adder SVG */
+  .gate-wire {
+    stroke: var(--wire-off);
+    stroke-width: 1.5;
+    fill: none;
+    transition: stroke 0.2s;
+  }
+  .gate-wire.on {
+    stroke: var(--wire-on);
+    filter: drop-shadow(0 0 4px var(--wire-glow));
+  }
+  .gate-body {
+    fill: var(--node-fill);
+    stroke: var(--accent);
+    stroke-width: 1.2;
+  }
+  .gate-label {
+    fill: var(--text);
+    font-size: 10px;
+    font-family: 'Geist Mono', monospace;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+  .pin-label {
+    fill: var(--text-dim);
+    font-size: 9px;
+    font-family: 'Geist Mono', monospace;
+  }
+  .pin-value {
+    fill: var(--accent);
+    font-size: 11px;
+    font-family: 'Geist Mono', monospace;
+    font-weight: 700;
+  }
+
+  /* LAYER 4: TRANSISTORS */
+  .transistor-area {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+  }
+  .transistor-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .transistor {
+    aspect-ratio: 1;
+    background: var(--node-fill);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.15s;
+    overflow: hidden;
+  }
+  .transistor.on {
+    background: rgba(79, 195, 247, 0.12);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(79, 195, 247, 0.4);
+  }
+  /* Group color coding — gates ↔ transistors visual match */
+  .transistor[data-group="xor"] { border-color: rgba(79, 195, 247, 0.45); }
+  .transistor[data-group="and"] { border-color: rgba(255, 183, 77, 0.45); }
+  .transistor[data-group="buf"] { border-color: rgba(129, 199, 132, 0.45); }
+  .transistor[data-group="xor"].on {
+    background: rgba(79, 195, 247, 0.18);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
+  }
+  .transistor[data-group="and"].on {
+    background: rgba(255, 183, 77, 0.18);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 10px rgba(255, 183, 77, 0.6);
+  }
+  .transistor[data-group="buf"].on {
+    background: rgba(129, 199, 132, 0.18);
+    border-color: var(--accent-3);
+    box-shadow: 0 0 10px rgba(129, 199, 132, 0.6);
+  }
+  .transistor[data-group="xor"].on::after { background: var(--accent);   box-shadow: 0 0 8px var(--accent); }
+  .transistor[data-group="and"].on::after { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+  .transistor[data-group="buf"].on::after { background: var(--accent-3); box-shadow: 0 0 8px var(--accent-3); }
+  /* Gate body colors to match transistor groups */
+  #gate-xor-body { stroke: var(--accent); }
+  #gate-and-body { stroke: var(--accent-2); }
+  #gate-xor { fill: var(--accent); }
+  #gate-and { fill: var(--accent-2); }
+  .transistor::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 2px;
+    background: var(--wire-off);
+    opacity: 0.3;
+    transition: all 0.15s;
+  }
+  .transistor.on::after {
+    background: var(--accent);
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .transistor-label {
+    position: absolute;
+    bottom: 3px;
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+  .transistor.on .transistor-label { color: var(--bg); font-weight: 700; }
+  .transistor-state {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 8px;
+    color: var(--text-dim);
+    z-index: 1;
+  }
+  .transistor.on .transistor-state { color: var(--bg); font-weight: 700; }
+
+  .transistor-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .switch-count {
+    color: var(--accent-2);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* Footer / explainer */
+  .explainer {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+  .explainer strong { color: var(--accent-2); }
+  .explainer code {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    border-radius: 2px;
+    color: var(--accent-3);
+    font-size: 10px;
+  }
+
+  /* Cycle counter */
+  .cycle-counter {
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-2);
+  }
+
+  @media (max-width: 768px) {
+    .gates-area { grid-template-columns: 1fr; }
+    .transistor-grid { grid-template-columns: repeat(6, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">⚡</div>
+    <div>
+      <div class="brand-text">Code → Transistor</div>
+      <div class="brand-sub">Live execution trace · int c = a + b</div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center;">
+    <div class="progress" id="progress">
+      <div class="progress-step" data-step="1"><div class="dot"></div><span class="label">JAVA</span></div>
+      <div class="progress-sep" data-sep="1"></div>
+      <div class="progress-step" data-step="2"><div class="dot"></div><span class="label">BYTECODE</span></div>
+      <div class="progress-sep" data-sep="2"></div>
+      <div class="progress-step" data-step="3"><div class="dot"></div><span class="label">JIT</span></div>
+      <div class="progress-sep" data-sep="3"></div>
+      <div class="progress-step" data-step="4"><div class="dot"></div><span class="label">ASM</span></div>
+      <div class="progress-sep" data-sep="4"></div>
+      <div class="progress-step" data-step="5"><div class="dot"></div><span class="label">GATES</span></div>
+      <div class="progress-sep" data-sep="5"></div>
+      <div class="progress-step" data-step="6"><div class="dot"></div><span class="label">TRANSISTORS</span></div>
+    </div>
+    <button id="pause-btn" class="pause-btn" title="Space để pause/resume">⏸ PAUSE</button>
+    <div class="live-indicator">
+      <div class="live-dot" id="live-dot"></div>
+      <span>CYCLE <span class="cycle-counter" id="cycle">0000</span></span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- LAYER 1: SOURCE CODE -->
+  <div class="layer" id="layer-1">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[01]</span> SOURCE · JAVA</div>
+      <div class="layer-title">What you write</div>
+      <div class="layer-status" id="status-1">idle</div>
+    </div>
+    <div class="code-block">
+      <div class="code-line" id="code-line">
+        <span class="code-line-num">42</span>
+        <span><span class="kw">int</span> <span class="var">c</span> <span class="op">=</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span><span class="punc">;</span></span>
+      </div>
+    </div>
+    <div class="explainer">
+      <strong>Tầng này:</strong> Code Java do bạn viết. Java <strong>không</strong> compile thẳng ra CPU instruction — phải qua 2 bước: <code>javac</code> → bytecode → JIT → native. Trong demo: <code>a = 3</code>, <code>b = 5</code> → kỳ vọng <code>c = 8</code>.
+    </div>
+  </div>
+
+  <div class="arrow-down" id="arrow-1">▼ javac</div>
+
+  <!-- LAYER 2: JVM BYTECODE -->
+  <div class="layer" id="layer-2">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[02]</span> JVM BYTECODE</div>
+      <div class="layer-title">What javac produces (.class file)</div>
+      <div class="layer-status" id="status-2">idle</div>
+    </div>
+    <div class="asm-block">
+      <div class="bc-line" data-bc="0">
+        <span class="asm-addr">#0</span>
+        <span class="asm-op">iload_1</span>
+        <span class="asm-args"></span>
+        <span class="asm-comment">push local var a onto operand stack</span>
+      </div>
+      <div class="bc-line" data-bc="1">
+        <span class="asm-addr">#1</span>
+        <span class="asm-op">iload_2</span>
+        <span class="asm-args"></span>
+        <span class="asm-comment">push local var b onto operand stack</span>
+      </div>
+      <div class="bc-line" data-bc="2">
+        <span class="asm-addr">#2</span>
+        <span class="asm-op">iadd</span>
+        <span class="asm-args"></span>
+        <span class="asm-comment">pop 2, add ints, push result  ← stack-based</span>
+      </div>
+      <div class="bc-line" data-bc="3">
+        <span class="asm-addr">#3</span>
+        <span class="asm-op">istore_3</span>
+        <span class="asm-args"></span>
+        <span class="asm-comment">pop into local var c</span>
+      </div>
+    </div>
+    <div class="explainer">
+      <strong>Tầng này:</strong> Bytecode là instruction của <strong>máy ảo JVM</strong>, không phải CPU thật. Stack-based: không có register, mọi thứ qua operand stack. File <code>.class</code> chạy được trên mọi OS/CPU vì JVM trừu tượng hoá phần cứng.
+    </div>
+  </div>
+
+  <div class="arrow-down" id="arrow-2">▼ JIT (HotSpot)</div>
+
+  <!-- LAYER 3: JIT COMPILER -->
+  <div class="layer" id="layer-3">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[03]</span> JIT COMPILER · HotSpot C2</div>
+      <div class="layer-title">JVM dịch bytecode → native khi "hot"</div>
+      <div class="layer-status" id="status-3">idle</div>
+    </div>
+    <div class="asm-block">
+      <div class="jit-line" data-jit="0">
+        <span class="asm-op">iload_1 + iload_2 + iadd</span>
+        <span class="asm-args" style="margin-left:12px; color:var(--accent-2);">→</span>
+        <span class="asm-args" style="color:var(--accent)">ADD EAX, EBX</span>
+        <span class="asm-comment">stack ops gộp & map vào register thật</span>
+      </div>
+      <div class="jit-line" data-jit="1">
+        <span class="asm-op">istore_3</span>
+        <span class="asm-args" style="margin-left:12px; color:var(--accent-2);">→</span>
+        <span class="asm-args" style="color:var(--accent)">MOV [c], EAX</span>
+        <span class="asm-comment">ghi register về memory slot của c</span>
+      </div>
+    </div>
+    <div class="explainer">
+      <strong>Tầng này:</strong> Ban đầu JVM <strong>interpret</strong> bytecode (chậm). Khi method chạy nhiều lần (≥ ~10k lần) → JIT (C1 rồi C2) dịch sang <strong>native x86/ARM</strong> + optimize (inlining, dead code elim, register allocation). Đây là lý do Java "nóng máy" mới nhanh.
+    </div>
+  </div>
+
+  <div class="arrow-down" id="arrow-3">▼ emit native</div>
+
+  <!-- LAYER 4: ASSEMBLY / INSTRUCTIONS -->
+  <div class="layer" id="layer-4">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[04]</span> CPU INSTRUCTIONS · x86</div>
+      <div class="layer-title">What the CPU executes</div>
+      <div class="layer-status" id="status-4">idle</div>
+    </div>
+    <div class="asm-block">
+      <div class="asm-line" data-step="0">
+        <span class="asm-addr">0x1000</span>
+        <span class="asm-op">MOV</span>
+        <span class="asm-args">EAX, [a]</span>
+        <span class="asm-comment">load a (=3) into register EAX</span>
+      </div>
+      <div class="asm-line" data-step="1">
+        <span class="asm-addr">0x1004</span>
+        <span class="asm-op">MOV</span>
+        <span class="asm-args">EBX, [b]</span>
+        <span class="asm-comment">load b (=5) into register EBX</span>
+      </div>
+      <div class="asm-line" data-step="2">
+        <span class="asm-addr">0x1008</span>
+        <span class="asm-op">ADD</span>
+        <span class="asm-args">EAX, EBX</span>
+        <span class="asm-comment">EAX ← EAX + EBX  ← THE ACTUAL ADDITION</span>
+      </div>
+      <div class="asm-line" data-step="3">
+        <span class="asm-addr">0x100C</span>
+        <span class="asm-op">MOV</span>
+        <span class="asm-args">[c], EAX</span>
+        <span class="asm-comment">store result (=8) into c</span>
+      </div>
+    </div>
+    <div class="explainer">
+      <strong>Tầng này:</strong> Mỗi dòng code phân rã thành nhiều <code>instruction</code> đơn giản. ADD là instruction quan trọng — nó kích hoạt <strong>ALU (Arithmetic Logic Unit)</strong> bên trong CPU.
+    </div>
+  </div>
+
+  <div class="arrow-down" id="arrow-4">▼ decode</div>
+
+  <div class="layer-row">
+<!-- LAYER 5: LOGIC GATES -->
+  <div class="layer" id="layer-5">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[05]</span> LOGIC GATES · HALF ADDER</div>
+      <div class="layer-title">How ADD physically works</div>
+      <div class="layer-status" id="status-5">idle</div>
+    </div>
+
+    <div class="gates-area">
+      <div class="gates-svg-wrap">
+        <svg viewBox="0 0 400 220" style="width: 100%; height: auto;">
+          <!-- Input A -->
+          <text class="pin-label" x="10" y="50">A bit</text>
+          <text class="pin-value" id="pin-a" x="10" y="68">0</text>
+          <path class="gate-wire" id="wire-a-xor" d="M 50 64 L 150 64" />
+          <path class="gate-wire" id="wire-a-and" d="M 50 64 L 90 64 L 90 144 L 150 144" />
+
+          <!-- Input B -->
+          <text class="pin-label" x="10" y="130">B bit</text>
+          <text class="pin-value" id="pin-b" x="10" y="148">0</text>
+          <path class="gate-wire" id="wire-b-xor" d="M 50 144 L 110 144 L 110 80 L 150 80" />
+          <path class="gate-wire" id="wire-b-and" d="M 50 144 L 150 144" />
+
+          <!-- XOR gate -->
+          <path class="gate-body" id="gate-xor-body" d="M 150 50 Q 175 72, 150 94 L 150 50 M 158 50 Q 183 72, 158 94 Q 195 72, 158 50" />
+          <text class="gate-label" id="gate-xor" x="180" y="72">XOR</text>
+
+          <!-- AND gate -->
+          <path class="gate-body" id="gate-and-body" d="M 150 130 L 150 174 L 180 174 Q 200 174, 200 152 Q 200 130, 180 130 Z" />
+          <text class="gate-label" id="gate-and" x="175" y="152">AND</text>
+
+          <!-- Output SUM -->
+          <path class="gate-wire" id="wire-sum" d="M 200 72 L 350 72" />
+          <text class="pin-label" x="320" y="60">SUM</text>
+          <text class="pin-value" id="pin-sum" x="355" y="76">0</text>
+
+          <!-- Output CARRY -->
+          <path class="gate-wire" id="wire-carry" d="M 200 152 L 350 152" />
+          <text class="pin-label" x="310" y="140">CARRY</text>
+          <text class="pin-value" id="pin-carry" x="355" y="156">0</text>
+        </svg>
+      </div>
+
+      <div class="gates-info">
+        <div class="info-row">
+          <span class="label">A (binary)</span>
+          <span class="value bit-display" id="bin-a">011</span>
+        </div>
+        <div class="info-row">
+          <span class="label">B (binary)</span>
+          <span class="value bit-display" id="bin-b">101</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Processing bit</span>
+          <span class="value" id="bit-idx">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">A[i] XOR B[i] → SUM</span>
+          <span class="value" id="calc-sum">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">A[i] AND B[i] → CARRY</span>
+          <span class="value" id="calc-carry">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Result (binary)</span>
+          <span class="value bit-display" id="bin-result">000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <strong>Tầng này:</strong> ADD = cộng từng cặp bit. Mỗi bit dùng một <code>half adder</code> = 1 cổng XOR (cho SUM) + 1 cổng AND (cho CARRY). Cộng <code>3 + 5</code> trong binary: <code>011 + 101 = 1000</code>. Animation đi từng bit từ phải sang trái.
+    </div>
+  </div>
+
+  <!-- LAYER 6: TRANSISTORS -->
+  <div class="layer" id="layer-6">
+    <div class="layer-header">
+      <div class="layer-tag"><span class="num">[06]</span> TRANSISTORS · CMOS</div>
+      <div class="layer-title">The actual physical switches</div>
+      <div class="layer-status" id="status-6">idle</div>
+    </div>
+
+    <div class="transistor-area">
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); letter-spacing:0.1em;">
+        <span>24 TRANSISTORS · 1 HALF ADDER (XOR=8 + AND=6) × per bit</span>
+        <span id="active-count">0/24 ON</span>
+      </div>
+      <div class="transistor-grid" id="transistor-grid">
+        <!-- Generated by JS -->
+      </div>
+      <div class="transistor-summary">
+        <span>Total switches this cycle:</span>
+        <span class="switch-count" id="switch-count">0</span>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <strong>Tầng này:</strong> Mỗi cổng logic = vài transistor CMOS. <code>XOR ≈ 8</code>, <code>AND ≈ 6</code>. Mỗi transistor là một khóa điện tử bật/tắt theo điện áp. Khi bạn thấy ô sáng = <strong>điện áp Gate ≥ Vth</strong> → khóa mở → dòng điện chạy. <strong>Đây là nơi vật lý gặp logic.</strong>
+    </div>
+  </div>
+  </div>
+
+</main>
+
+<script>
+// ========== STATE ==========
+const A = 3, B = 5;  // 011 + 101 = 1000
+const bitsA = [1, 1, 0, 0];  // little-endian (bit 0 first)
+const bitsB = [1, 0, 1, 0];
+
+let cycle = 0;
+let bitIdx = 0;
+let carry = 0;
+let resultBits = [0, 0, 0, 0];
+let switchesThisRound = 0;
+
+// ========== INIT TRANSISTOR GRID ==========
+const grid = document.getElementById('transistor-grid');
+// 24 transistors: T01..T08 for XOR, T09..T14 for AND, T15..T24 spare/output buffer
+for (let i = 1; i <= 24; i++) {
+  const el = document.createElement('div');
+  el.className = 'transistor';
+  el.id = `t${i}`;
+  const tag = i <= 8 ? 'XOR' : (i <= 14 ? 'AND' : 'BUF');
+  el.dataset.group = tag.toLowerCase();
+  el.innerHTML = `
+    <div class="transistor-state" id="t${i}-state">OFF</div>
+    <div class="transistor-label">T${String(i).padStart(2,'0')} ${tag}</div>
+  `;
+  grid.appendChild(el);
+}
+
+// ========== HELPERS ==========
+const setStatus = (n, txt) => document.getElementById(`status-${n}`).textContent = txt;
+const setActive = (n, on) => {
+  const layer = document.getElementById(`layer-${n}`);
+  layer.classList.toggle('active', on);
+  if (n < 5) document.getElementById(`arrow-${n}`)?.classList.toggle('active', on);
+  const step = document.querySelector(`.progress-step[data-step="${n}"]`);
+  if (step) {
+    step.classList.toggle('active', on);
+    if (on) {
+      for (let i = 1; i < n; i++) {
+        document.querySelector(`.progress-step[data-step="${i}"]`)?.classList.add('done');
+        document.querySelector(`.progress-step[data-step="${i}"]`)?.classList.remove('active');
+        document.querySelector(`.progress-sep[data-sep="${i}"]`)?.classList.add('done');
+      }
+      layer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+};
+const resetProgress = () => {
+  document.querySelectorAll('.progress-step').forEach(s => s.classList.remove('active','done'));
+  document.querySelectorAll('.progress-sep').forEach(s => s.classList.remove('done'));
+};
+const SPEED = 1.6; // global slow-down multiplier (1 = original)
+let paused = false;
+let pauseResolvers = [];
+const waitWhilePaused = () => paused ? new Promise(r => pauseResolvers.push(r)) : Promise.resolve();
+const wait = async (ms) => {
+  await waitWhilePaused();
+  await new Promise(r => setTimeout(r, ms * SPEED));
+  await waitWhilePaused();
+};
+function togglePause() {
+  paused = !paused;
+  const btn = document.getElementById('pause-btn');
+  const dot = document.getElementById('live-dot');
+  btn.classList.toggle('paused', paused);
+  dot.classList.toggle('paused', paused);
+  btn.textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+  if (!paused) { pauseResolvers.splice(0).forEach(r => r()); }
+}
+document.getElementById('pause-btn').addEventListener('click', togglePause);
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); togglePause(); }
+});
+
+// ===== GATE → TRANSISTOR LINK OVERLAY =====
+function centerOf(el, container) {
+  const r = el.getBoundingClientRect();
+  const c = container.getBoundingClientRect();
+  return { x: r.left - c.left + r.width / 2, y: r.top - c.top + r.height / 2 };
+}
+function midRect(el1, el2, container) {
+  const c1 = centerOf(el1, container);
+  const c2 = centerOf(el2, container);
+  return { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
+}
+function drawLinks() {
+  const row = document.querySelector('.layer-row');
+  const svg = document.getElementById('link-overlay');
+  if (!row || !svg) return;
+  const rect = row.getBoundingClientRect();
+  svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+
+  const xorGate = document.getElementById('gate-xor');
+  const andGate = document.getElementById('gate-and');
+  const t1 = document.getElementById('t1');
+  const t8 = document.getElementById('t8');
+  const t9 = document.getElementById('t9');
+  const t14 = document.getElementById('t14');
+  if (!xorGate || !t1 || !t8 || !andGate || !t9 || !t14) return;
+
+  const xorStart = centerOf(xorGate, row);
+  const xorEnd = midRect(t1, t8, row);
+  const andStart = centerOf(andGate, row);
+  const andEnd = midRect(t9, t14, row);
+
+  const bezier = (s, e) => {
+    const mx = (s.x + e.x) / 2;
+    return `M ${s.x} ${s.y} C ${mx} ${s.y}, ${mx} ${e.y}, ${e.x} ${e.y}`;
+  };
+  document.getElementById('link-xor').setAttribute('d', bezier(xorStart, xorEnd));
+  document.getElementById('link-and').setAttribute('d', bezier(andStart, andEnd));
+
+  const xorMid = { x: (xorStart.x + xorEnd.x) / 2, y: (xorStart.y + xorEnd.y) / 2 - 6 };
+  const andMid = { x: (andStart.x + andEnd.x) / 2, y: (andStart.y + andEnd.y) / 2 - 6 };
+  const xorLbl = document.getElementById('link-xor-label');
+  const andLbl = document.getElementById('link-and-label');
+  xorLbl.setAttribute('x', xorMid.x); xorLbl.setAttribute('y', xorMid.y);
+  andLbl.setAttribute('x', andMid.x); andLbl.setAttribute('y', andMid.y);
+}
+function setLinksVisible(v) {
+  document.getElementById('link-overlay').classList.toggle('show', v);
+  if (v) drawLinks();
+}
+window.addEventListener('resize', () => {
+  if (document.getElementById('link-overlay').classList.contains('show')) drawLinks();
+});
+
+function setTransistor(idx, on) {
+  const el = document.getElementById(`t${idx}`);
+  const st = document.getElementById(`t${idx}-state`);
+  const wasOn = el.classList.contains('on');
+  el.classList.toggle('on', on);
+  st.textContent = on ? 'ON' : 'OFF';
+  if (wasOn !== on) switchesThisRound++;
+  updateActiveCount();
+}
+
+function updateActiveCount() {
+  const n = document.querySelectorAll('.transistor.on').length;
+  document.getElementById('active-count').textContent = `${n}/24 ON`;
+  document.getElementById('switch-count').textContent = switchesThisRound;
+}
+
+function setWire(id, on) {
+  document.getElementById(id).classList.toggle('on', on);
+}
+
+function setPin(id, val) {
+  document.getElementById(id).textContent = val;
+  document.getElementById(id).style.fill = val === 1 || val === '1' ? 'var(--accent)' : 'var(--text-dim)';
+}
+
+function resetAllTransistors() {
+  for (let i = 1; i <= 24; i++) setTransistor(i, false);
+}
+
+async function movPulse(label, ids) {
+  setActive(6, true);
+  setStatus(6, label);
+  for (const t of ids) { setTransistor(t, true); await wait(20); }
+  await wait(350);
+  for (const t of ids) setTransistor(t, false);
+  await wait(120);
+}
+
+function resetAllWires() {
+  ['wire-a-xor','wire-a-and','wire-b-xor','wire-b-and','wire-sum','wire-carry'].forEach(w => setWire(w, false));
+}
+
+function formatBin(bits) {
+  // bits are little-endian; display MSB first
+  return [...bits].reverse().join('');
+}
+
+// ========== MAIN LOOP ==========
+async function runCycle() {
+  cycle++;
+  document.getElementById('cycle').textContent = String(cycle).padStart(4, '0');
+  switchesThisRound = 0;
+
+  // Reset state
+  bitIdx = 0;
+  carry = 0;
+  resultBits = [0, 0, 0, 0];
+  resetAllWires();
+  resetAllTransistors();
+  document.getElementById('bin-a').textContent = formatBin(bitsA);
+  document.getElementById('bin-b').textContent = formatBin(bitsB);
+  document.getElementById('bin-result').textContent = '0000';
+  document.getElementById('bit-idx').textContent = '—';
+  document.getElementById('calc-sum').textContent = '—';
+  document.getElementById('calc-carry').textContent = '—';
+  setPin('pin-a', 0);
+  setPin('pin-b', 0);
+  setPin('pin-sum', 0);
+  setPin('pin-carry', 0);
+  [1,2,3,4,5,6].forEach(n => { setActive(n, false); setStatus(n, 'idle'); });
+  resetProgress();
+  document.querySelectorAll('.asm-line, .bc-line, .jit-line').forEach(l => l.classList.remove('active','done'));
+  document.getElementById('code-line').classList.remove('highlight');
+
+  await wait(600);
+
+  // ========== LAYER 1: CODE ==========
+  setActive(1, true);
+  setStatus(1, 'parsing');
+  document.getElementById('code-line').classList.add('highlight');
+  await wait(1200);
+  setStatus(1, 'compiled');
+  await wait(400);
+
+  // ========== LAYER 2: JVM BYTECODE ==========
+  setActive(2, true);
+  setStatus(2, 'javac → .class');
+  const bcLines = document.querySelectorAll('.bc-line');
+  for (let i = 0; i < bcLines.length; i++) {
+    bcLines[i].classList.add('active');
+    await wait(350);
+    bcLines[i].classList.remove('active');
+    bcLines[i].classList.add('done');
+  }
+  setStatus(2, 'done');
+  await wait(300);
+
+  // ========== LAYER 3: JIT COMPILER ==========
+  setActive(3, true);
+  setStatus(3, 'C2 compiling');
+  const jitLines = document.querySelectorAll('.jit-line');
+  for (let i = 0; i < jitLines.length; i++) {
+    jitLines[i].classList.add('active');
+    await wait(500);
+    jitLines[i].classList.remove('active');
+    jitLines[i].classList.add('done');
+  }
+  setStatus(3, 'native emitted');
+  await wait(300);
+
+  // ========== LAYER 4: INSTRUCTIONS ==========
+  setActive(4, true);
+  setStatus(4, 'executing');
+
+  const asmLines = document.querySelectorAll('.asm-line');
+  for (let s = 0; s < asmLines.length; s++) {
+    asmLines[s].classList.add('active');
+    await wait(500);
+
+    // MOV instructions: pulse a small group of transistors (register load / bus drive)
+    if (s === 0) await movPulse('REGISTER LOAD · EAX', [15,16,17,18]);
+    else if (s === 1) await movPulse('REGISTER LOAD · EBX', [19,20,21,22]);
+    else if (s === 3) await movPulse('BUS DRIVE · store [c]', [15,16,17,18,19,20]);
+
+    // When we hit ADD (step 2), drop into gate layer
+    if (s === 2) {
+      await wait(300);
+      setActive(5, true);
+      setActive(6, true);
+      setStatus(5, 'computing');
+      setStatus(6, 'switching');
+      await wait(100);
+
+      // Process each bit
+      for (let i = 0; i < 4; i++) {
+        bitIdx = i;
+        const a = bitsA[i];
+        const b = bitsB[i];
+
+        document.getElementById('bit-idx').textContent = `bit ${i} (A=${a}, B=${b}, carry-in=${carry})`;
+        setPin('pin-a', a);
+        setPin('pin-b', b);
+
+        // Drive input wires
+        setWire('wire-a-xor', a === 1);
+        setWire('wire-a-and', a === 1);
+        setWire('wire-b-xor', b === 1);
+        setWire('wire-b-and', b === 1);
+
+        // Activate transistors based on inputs (visualization)
+        // XOR gate transistors (T1-T8)
+        for (let t = 1; t <= 8; t++) {
+          // Pattern: half react to A, half to B, XOR-ish activation
+          let on;
+          if (t <= 4) on = (a === 1);
+          else on = (b === 1);
+          // Some flip for XOR pull-up/pull-down look
+          if (t % 2 === 0) on = !on;
+          setTransistor(t, on);
+          if (t % 2 === 0) await wait(15);
+        }
+
+        await wait(150);
+
+        // Compute SUM = A XOR B, CARRY = A AND B (for this bit, ignore carry-in for simplicity)
+        const sumBit = a ^ b;
+        const carryBit = a & b;
+
+        // SUM result with carry-in propagation
+        const totalSum = a + b + carry;
+        const finalSum = totalSum % 2;
+        const finalCarry = totalSum >= 2 ? 1 : 0;
+
+        // AND gate transistors (T9-T14)
+        for (let t = 9; t <= 14; t++) {
+          let on;
+          if (t <= 11) on = (a === 1);
+          else on = (b === 1);
+          if (t === 14) on = (a === 1 && b === 1);
+          setTransistor(t, on);
+          await wait(15);
+        }
+
+        // Output buffer transistors (T15-T24)
+        for (let t = 15; t <= 20; t++) {
+          setTransistor(t, finalSum === 1 && (t % 2 === 0));
+          await wait(10);
+        }
+        for (let t = 21; t <= 24; t++) {
+          setTransistor(t, finalCarry === 1 && (t % 2 === 1));
+          await wait(10);
+        }
+
+        await wait(200);
+
+        // Set output pins and wires
+        setPin('pin-sum', finalSum);
+        setPin('pin-carry', finalCarry);
+        setWire('wire-sum', finalSum === 1);
+        setWire('wire-carry', finalCarry === 1);
+
+        document.getElementById('calc-sum').textContent = `${a} XOR ${b} = ${sumBit}`;
+        document.getElementById('calc-carry').textContent = `${a} AND ${b} = ${carryBit}`;
+
+        resultBits[i] = finalSum;
+        carry = finalCarry;
+
+        // Update running result
+        const partial = [...resultBits];
+        document.getElementById('bin-result').textContent = formatBin(partial);
+
+        await wait(700);
+
+        // Clear for next bit
+        resetAllWires();
+        for (let t = 1; t <= 24; t++) setTransistor(t, false);
+        await wait(150);
+      }
+
+      // After all bits, show final result (with overflow carry)
+      const finalBits = [...resultBits];
+      // Add the final carry as 5th bit if any
+      if (carry === 1) {
+        document.getElementById('bin-result').textContent = '1' + formatBin(finalBits);
+      } else {
+        document.getElementById('bin-result').textContent = formatBin(finalBits);
+      }
+
+      document.getElementById('bit-idx').textContent = `DONE · result = ${A + B} (decimal)`;
+      setStatus(5, 'done');
+      await wait(800);
+    }
+
+    asmLines[s].classList.remove('active');
+    asmLines[s].classList.add('done');
+  }
+
+  setStatus(4, 'done');
+  await wait(600);
+
+  // Pause before next cycle
+  setStatus(1, 'done');
+  setActive(6, true);
+  setStatus(6, `${switchesThisRound} switches`);
+  await wait(1500);
+  setActive(6, false);
+  setStatus(6, 'idle');
+}
+
+// ========== START LOOP ==========
+async function loop() {
+  while (true) {
+    await runCycle();
+    await wait(500);
+  }
+}
+
+loop();
+</script>
+</body>
+</html>

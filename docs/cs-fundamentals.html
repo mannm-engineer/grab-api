@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layer 1: Computer & OS — SE Fundamentals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg0: #0d1117;
+            --bg1: #161b22;
+            --bg2: #1c2128;
+            --bg3: #21262d;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-hi: rgba(255, 255, 255, 0.14);
+            --text: #c9d1d9;
+            --text-muted: #6e7681;
+            --text-dim: #444c56;
+            --font: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg0);
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* ─── HEADER ─── */
+        header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg1);
+            flex-shrink: 0;
+            gap: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-self: start;
+        }
+
+        .header-logo {
+            flex-shrink: 0;
+            display: block;
+        }
+
+        .header-brand {
+            color: var(--text-muted);
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            justify-self: center;
+        }
+
+        .header-layer {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            border: 1px solid var(--border-hi);
+            border-radius: 3px;
+        }
+
+        .header-title {
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+
+        .header-hint {
+            justify-self: end;
+        }
+
+        .header-hint {
+            font-size: 10px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-hint kbd {
+            background: var(--bg3);
+            border: 1px solid var(--border-hi);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: var(--font);
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        /* ─── LAYOUT ─── */
+        .layout {
+            display: flex;
+            flex-direction: row-reverse;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ─── LEFT SIDEBAR ─── */
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background: var(--bg1);
+        }
+
+        /* ─── HW / SW BOUNDARY ─── */
+        .boundary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .boundary-line {
+            flex: 1;
+            height: 1px;
+            background: repeating-linear-gradient(90deg,
+                    var(--border-hi) 0, var(--border-hi) 4px,
+                    transparent 4px, transparent 8px);
+        }
+
+        .boundary-label {
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+            padding: 2px 8px;
+            border: 1px solid var(--border-hi);
+            border-radius: 3px;
+            background: var(--bg1);
+        }
+
+        .zone-label {
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 2px 0;
+        }
+
+        .layer-node {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            background: var(--bg2);
+            user-select: none;
+        }
+
+        .layer-node:hover {
+            border-color: var(--border-hi);
+            background: var(--bg3);
+        }
+
+        .layer-node.active {
+            background: var(--node-bg);
+            border-color: var(--node-color);
+            border-left-width: 3px;
+            animation: nodeBreathe 3s ease-in-out infinite;
+        }
+
+        .layer-node.active .node-num {
+            color: var(--node-color);
+        }
+
+        .layer-node.active .node-title {
+            color: var(--node-color);
+        }
+
+        .node-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .node-num {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .node-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .node-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .node-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Connector arrow */
+        .connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 22px;
+            gap: 6px;
+            color: var(--text-dim);
+            font-size: 9px;
+        }
+
+        .connector-line {
+            width: 1px;
+            height: 14px;
+            background: var(--border-hi);
+            margin: 0 auto;
+            position: relative;
+            overflow: visible;
+        }
+
+        .connector-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            position: absolute;
+            right: -60px;
+            white-space: nowrap;
+        }
+
+        /* I/O connector (clickable bridge between CPU/RAM and Disk) */
+        .connector-io {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.15s;
+        }
+
+        .connector-io:hover {
+            opacity: 1;
+        }
+
+        .connector-io.active {
+            opacity: 1;
+        }
+
+        .io-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-hi);
+        }
+
+        .io-badge {
+            font-size: 9px;
+            color: #d29922;
+            border: 1px solid rgba(210, 153, 34, 0.35);
+            background: rgba(210, 153, 34, 0.06);
+            padding: 2px 7px;
+            border-radius: 3px;
+            white-space: nowrap;
+            letter-spacing: 0.04em;
+            flex-shrink: 0;
+        }
+
+        .speed-bar {
+            margin: 12px 0 4px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            height: 4px;
+            background: var(--bg0);
+        }
+
+        .speed-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* ─── RESIZER ─── */
+        .resizer {
+            width: 4px;
+            flex-shrink: 0;
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+            transition: background 0.15s;
+        }
+
+        .resizer:hover,
+        .resizer.dragging {
+            background: var(--border-hi);
+        }
+
+        .resizer::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 24px;
+            border-left: 1px solid var(--text-dim);
+            border-right: 1px solid var(--text-dim);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .resizer:hover::after,
+        .resizer.dragging::after {
+            opacity: 1;
+        }
+
+        /* ─── MAIN PANEL ─── */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── DETAIL HEADER ─── */
+        .detail-header {
+            padding: 16px 24px 0;
+            flex-shrink: 0;
+        }
+
+        .detail-path {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            letter-spacing: 0.04em;
+        }
+
+        .detail-path span {
+            color: var(--node-color, var(--text-muted));
+        }
+
+        .detail-title-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .detail-num {
+            font-size: 22px;
+            color: var(--node-color, var(--text-muted));
+            line-height: 1;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .detail-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* ─── TABS ─── */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            font-family: var(--font);
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 8px 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: color 0.15s, border-color 0.15s;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--node-color, var(--text));
+            border-bottom-color: var(--node-color, var(--text));
+        }
+
+        /* ─── CONTENT PANELS ─── */
+        .panel {
+            display: none;
+            padding: 20px 24px 32px;
+            animation: fadeIn 0.15s ease;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Info panel */
+        .info-desc {
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.8;
+            margin-bottom: 16px;
+            max-width: 640px;
+        }
+
+        .info-desc code {
+            background: var(--bg3);
+            border: 1px solid var(--border-hi);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--node-color, #58a6ff);
+        }
+
+        .info-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 640px;
+        }
+
+        .info-list li {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 12px;
+            line-height: 1.7;
+            padding: 8px 12px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            border-left: 2px solid var(--node-color, var(--border-hi));
+        }
+
+        .info-list li::before {
+            content: '➡️';
+            color: var(--node-color, var(--text-muted));
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .info-list strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .info-list code {
+            background: var(--bg3);
+            border: 1px solid var(--border-hi);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--node-color, #58a6ff);
+        }
+
+        /* CLI panel */
+        .cli-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 680px;
+        }
+
+        .cli-item {
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+            transition: border-color 0.15s;
+            cursor: pointer;
+        }
+
+        .cli-item:hover {
+            border-color: var(--border-hi);
+        }
+
+        .cli-cmd {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            background: var(--bg2);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--node-color, #58a6ff);
+        }
+
+        .cli-prompt {
+            color: var(--text-dim);
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .cli-text {
+            flex: 1;
+        }
+
+        .cli-copy {
+            font-size: 9px;
+            color: var(--text-dim);
+            padding: 2px 6px;
+            border: 1px solid var(--border-hi);
+            border-radius: 3px;
+            background: var(--bg3);
+            cursor: pointer;
+            transition: color 0.15s;
+            flex-shrink: 0;
+            font-family: var(--font);
+        }
+
+        .cli-copy:hover {
+            color: var(--text);
+        }
+
+        .cli-copy.copied {
+            color: #3fb950;
+            border-color: #3fb950;
+        }
+
+        .cli-desc {
+            padding: 6px 14px 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            background: var(--bg1);
+        }
+
+        /* Example panel */
+        .example-box {
+            max-width: 640px;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--node-color, var(--border-hi));
+            border-radius: 5px;
+            background: var(--bg2);
+        }
+
+        .example-q {
+            padding: 12px 16px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .example-q::before {
+            content: '❓';
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--node-color, var(--text-muted));
+            color: var(--bg0);
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .example-a {
+            padding: 14px 16px;
+            font-size: 12px;
+            line-height: 1.85;
+            color: var(--text);
+        }
+
+        .example-a strong {
+            color: var(--node-color, var(--text));
+            font-weight: 500;
+        }
+
+        .example-a code {
+            background: var(--bg3);
+            border: 1px solid var(--border-hi);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--node-color, #58a6ff);
+        }
+
+        /* ─── EMPTY STATE ─── */
+        .empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-dim);
+            padding: 40px;
+        }
+
+        .empty-icon {
+            font-size: 28px;
+            opacity: 0.4;
+        }
+
+        .empty-text {
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            border-top: 1px solid var(--border);
+            background: var(--bg1);
+            padding: 8px 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .mem-hierarchy {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+        }
+
+        .mem-item {
+            flex: 1;
+            text-align: center;
+            padding: 4px 0;
+            border-right: 1px solid var(--border);
+        }
+
+        .mem-item:last-child {
+            border-right: none;
+        }
+
+        .mem-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .mem-speed {
+            font-size: 9px;
+            font-weight: 500;
+        }
+
+        .mem-bar {
+            height: 2px;
+            border-radius: 2px;
+            margin: 3px auto 0;
+        }
+
+        .footer-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg3);
+            border-radius: 2px;
+        }
+
+        /* ─── HW GROUP ─── */
+        .hw-group {
+            border: 1px solid rgba(247, 129, 102, 0.25);
+            border-left: 2px solid #f78166;
+            border-radius: 5px;
+            padding: 6px 6px 8px;
+            margin: 2px 0;
+            background: rgba(247, 129, 102, 0.02);
+            position: relative;
+        }
+
+        .hw-group-label {
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #f78166;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .hw-group .connector {
+            height: 16px;
+        }
+
+        .hw-group .connector-line {
+            height: 10px;
+        }
+
+        .hw-group .connector-io {
+            margin: 2px 0;
+        }
+
+        /* ─── OS GROUP ─── */
+        .os-group {
+            border: 1px solid rgba(86, 182, 194, 0.3);
+            border-left: 2px solid #56b6c2;
+            border-radius: 5px;
+            padding: 6px 6px 8px;
+            margin: 2px 0;
+            background: rgba(86, 182, 194, 0.03);
+            position: relative;
+        }
+
+        .os-group-label {
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #56b6c2;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .os-group-label:hover {
+            color: #7dd3de;
+        }
+
+        .os-group.active {
+            border-color: #56b6c2;
+            background: rgba(86, 182, 194, 0.06);
+            animation: nodeBreathe 3s ease-in-out infinite;
+            --node-color: #56b6c2;
+        }
+
+        .os-group.active .os-group-label {
+            color: #56b6c2;
+            font-weight: 500;
+        }
+
+        .os-group .connector {
+            height: 16px;
+        }
+
+        .os-group .connector-line {
+            height: 10px;
+        }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes particleDrop {
+            0% {
+                top: -3px;
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 12px;
+                opacity: 0;
+            }
+        }
+
+        @keyframes nodeBreathe {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 transparent;
+            }
+
+            50% {
+                box-shadow: 0 0 12px -2px var(--node-color);
+            }
+        }
+
+        .connector-line::before,
+        .connector-line::after {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            box-shadow: 0 0 5px var(--text-muted);
+            left: -1px;
+            animation: particleDrop 1.8s ease-in-out infinite;
+        }
+
+        .connector-line::after {
+            animation-delay: 0.9s;
+        }
+
+        /* I/O connector animated dots */
+        @keyframes ioSlide {
+            0% {
+                left: 0;
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 0.8;
+            }
+
+            85% {
+                opacity: 0.8;
+            }
+
+            100% {
+                left: calc(100% - 3px);
+                opacity: 0;
+            }
+        }
+
+        .io-line {
+            position: relative;
+            overflow: visible;
+        }
+
+        .io-line::before {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #d29922;
+            box-shadow: 0 0 5px #d29922;
+            top: -1px;
+            animation: ioSlide 3s ease-in-out infinite;
+        }
+
+        /* ─── DIAGRAM ─── */
+        .diagram-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 10px;
+        }
+
+        .diagram-hint {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-align: center;
+            letter-spacing: 0.04em;
+        }
+
+        .diagram-hint kbd {
+            background: var(--bg3);
+            border: 1px solid var(--border-hi);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: var(--font);
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .diagram-wrap svg {
+            max-width: 640px;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-left">
+            <svg class="header-logo" width="26" height="26" viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="17" width="20" height="4" rx="1" fill="#56b6c2" />
+                <rect x="3" y="11" width="20" height="4" rx="1" fill="#a5a0e8" opacity="0.65" />
+                <rect x="3" y="5" width="20" height="4" rx="1" fill="#f78166" opacity="0.4" />
+            </svg>
+            <span class="header-brand">SE Fundamentals</span>
+        </div>
+        <div class="header-center">
+            <span class="header-layer">Layer 1</span>
+            <span class="header-title">Computer &amp; Operating System</span>
+        </div>
+        <div class="header-hint">
+            <span><kbd>↑</kbd><kbd>↓</kbd> di chuyển</span>
+            <span><kbd>1</kbd>–<kbd>3</kbd> tab</span>
+            <span><kbd>C</kbd> copy cmd</span>
+        </div>
+    </header>
+
+    <div class="layout">
+
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+
+            <div class="zone-label">💾 software</div>
+            <div class="os-group">
+                <div class="os-group-label" onclick="selectLayer('os')">🏗️ Operating System</div>
+                <div id="node-process"></div>
+            </div>
+
+            <div class="boundary">
+                <div class="boundary-line"></div>
+                <span class="boundary-label">hw / sw</span>
+                <div class="boundary-line"></div>
+            </div>
+
+            <div class="zone-label">🔧 hardware</div>
+            <div class="hw-group">
+                <div class="hw-group-label">⚡ Hardware</div>
+                <div class="node-pair">
+                    <div id="node-cpu"></div>
+                    <div id="node-ram"></div>
+                </div>
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+                <div id="node-disk"></div>
+            </div>
+            <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
+                <div
+                    style="font-size:9px;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-bottom:6px;">
+                    nền tảng</div>
+                <div id="node-binary"></div>
+            </div>
+        </div>
+
+        <div class="resizer" id="resizer"></div>
+
+        <!-- MAIN PANEL -->
+        <div class="main" id="main">
+            <div class="diagram-wrap" id="empty">
+                <svg viewBox="0 0 520 355" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- PATHS -->
+                    <path id="dp-os-hw" d="M 260 120 L 260 157" fill="none" stroke="#56b6c2" stroke-width="1.5"
+                        opacity="0.3" />
+                    <path id="dp-cpu-ram" d="M 235 200 L 285 200" fill="none" stroke="#f78166" stroke-width="2"
+                        opacity="0.4" />
+                    <!-- hw/sw boundary -->
+                    <line x1="60" y1="137" x2="460" y2="137" stroke="#444c56" stroke-width="1" stroke-dasharray="6 4"
+                        opacity="0.5" />
+                    <rect x="215" y="127" width="90" height="20" rx="3" fill="#161b22" stroke="#444c56"
+                        stroke-width="1" />
+                    <text x="260" y="141" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace"
+                        font-size="9" letter-spacing="0.1em">hw / sw</text>
+
+                    <!-- speed labels -->
+                    <text x="38" y="35" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace"
+                        font-size="8" letter-spacing="0.08em" writing-mode="tb">NHANH</text>
+                    <text x="28" y="30" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace"
+                        font-size="10">&#x25B2;</text>
+                    <text x="38" y="290" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace"
+                        font-size="8" letter-spacing="0.08em" writing-mode="tb">CHAM</text>
+                    <text x="28" y="340" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace"
+                        font-size="10">&#x25BC;</text>
+
+                    <!-- Binary watermark — behind all layers -->
+                    <g onclick="selectLayer('binary')" style="cursor:pointer" opacity="0.055">
+                        <text x="70" y="28" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">01001000 01100101 01101100 01101100 01101111 00100000 01010111
+                            01101111 01110010</text>
+                        <text x="70" y="90" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">01001011 01100101 01110010 01101110 01100101 01101100 00100000
+                            01010011 01111001</text>
+                        <text x="70" y="155" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">11110000 10011111 10001001 10110010 00100000 01000011 01010000
+                            01010101 00100000</text>
+                        <text x="70" y="210" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">01010010 01000001 01001101 00100000 01110110 01101111 01101100
+                            01100001 01110100</text>
+                        <text x="70" y="270" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">01010011 01110100 01101111 01110010 01100001 01100111 01100101
+                            00100000 01110000</text>
+                        <text x="70" y="330" fill="#8b949e" font-family="JetBrains Mono, monospace" font-size="8"
+                            letter-spacing="0.12em">00110000 00110001 00110000 00110001 00110000 00110000 00110000
+                            00110001 00110000</text>
+                    </g>
+
+                    <!-- ══════ BOXES ══════ -->
+
+                    <!-- OS container -->
+                    <g onclick="selectLayer('os')" style="cursor:pointer">
+                        <rect x="70" y="10" width="380" height="110" rx="6" fill="#161b22" stroke="#56b6c2"
+                            stroke-width="1.5">
+                            <animate attributeName="stroke-opacity" values="0.4;0.8;0.4" dur="4s"
+                                repeatCount="indefinite" />
+                        </rect>
+                        <text x="260" y="24" text-anchor="middle" fill="#56b6c2" font-family="JetBrains Mono, monospace" font-size="10"
+                            letter-spacing="0.08em" font-weight="500">&#x1F3D7;&#xFE0F; OPERATING SYSTEM</text>
+                        <text x="260" y="36" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace" font-size="8">Kernel | Syscall | Scheduler</text>
+                    </g>
+
+                    <!-- Process (inside OS) -->
+                    <g onclick="selectLayer('process')" style="cursor:pointer">
+                        <rect x="90" y="40" width="340" height="55" rx="4" fill="#1c2128" stroke="#a5a0e8"
+                            stroke-width="1">
+                            <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="4s"
+                                repeatCount="indefinite" />
+                        </rect>
+                        <text x="260" y="62" text-anchor="middle" fill="#a5a0e8" font-family="JetBrains Mono, monospace" font-size="12"
+                            font-weight="500">Process &amp; Thread</text>
+                        <text x="260" y="80" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace" font-size="8">PID | Stack | Heap | Context Switch</text>
+                    </g>
+
+                    <!-- HARDWARE container -->
+                    <rect x="70" y="155" width="380" height="185" rx="6" fill="#161b22" stroke="#f78166"
+                        stroke-width="1.5" opacity="0.5">
+                        <animate attributeName="stroke-opacity" values="0.3;0.6;0.3" dur="4s"
+                            repeatCount="indefinite" />
+                    </rect>
+                    <text x="260" y="173" text-anchor="middle" fill="#f78166" font-family="JetBrains Mono, monospace" font-size="10"
+                        letter-spacing="0.08em" font-weight="500">&#x26A1; HARDWARE</text>
+
+                    <!-- CPU (inside HW) -->
+                    <g onclick="selectLayer('cpu')" style="cursor:pointer">
+                        <rect x="90" y="180" width="150" height="55" rx="4" fill="#1c2128" stroke="#f78166"
+                            stroke-width="1">
+                            <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="3s"
+                                repeatCount="indefinite" />
+                        </rect>
+                        <text x="165" y="202" text-anchor="middle" fill="#f78166"
+                            font-family="JetBrains Mono, monospace" font-size="12" font-weight="500">CPU</text>
+                        <text x="165" y="222" text-anchor="middle" fill="#444c56"
+                            font-family="JetBrains Mono, monospace" font-size="7">Fetch | Decode | Execute</text>
+                    </g>
+
+                    <!-- RAM (inside HW) -->
+                    <g onclick="selectLayer('ram')" style="cursor:pointer">
+                        <rect x="280" y="180" width="150" height="55" rx="4" fill="#1c2128" stroke="#58a6ff"
+                            stroke-width="1">
+                            <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="3.5s"
+                                repeatCount="indefinite" />
+                        </rect>
+                        <text x="355" y="202" text-anchor="middle" fill="#58a6ff"
+                            font-family="JetBrains Mono, monospace" font-size="12" font-weight="500">RAM</text>
+                        <text x="355" y="222" text-anchor="middle" fill="#444c56"
+                            font-family="JetBrains Mono, monospace" font-size="7">~100 ns | volatile</text>
+                    </g>
+
+                    <!-- Storage (inside HW) -->
+                    <g onclick="selectLayer('disk')" style="cursor:pointer">
+                        <rect x="90" y="270" width="340" height="55" rx="4" fill="#1c2128" stroke="#7ee787"
+                            stroke-width="1">
+                            <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="5s"
+                                repeatCount="indefinite" />
+                        </rect>
+                        <text x="260" y="292" text-anchor="middle" fill="#7ee787" font-family="JetBrains Mono, monospace" font-size="12"
+                            font-weight="500">Storage</text>
+                        <text x="260" y="310" text-anchor="middle" fill="#444c56" font-family="JetBrains Mono, monospace" font-size="8">SSD ~0.1ms | HDD ~10ms | persistent</text>
+                    </g>
+
+                    <!-- ══════ ANIMATED PARTICLES ══════ -->
+
+                    <!-- OS -> Hardware (teal, crossing boundary) -->
+                    <circle r="3" fill="#56b6c2" filter="url(#glow)">
+                        <animateMotion dur="2.5s" repeatCount="indefinite" begin="0.2s">
+                            <mpath href="#dp-os-hw" />
+                        </animateMotion>
+                        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.5s"
+                            repeatCount="indefinite" begin="0.2s" />
+                    </circle>
+                    <circle r="2.5" fill="#56b6c2" filter="url(#glow)">
+                        <animateMotion dur="2.5s" repeatCount="indefinite" begin="1.5s">
+                            <mpath href="#dp-os-hw" />
+                        </animateMotion>
+                        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.5s"
+                            repeatCount="indefinite" begin="1.5s" />
+                    </circle>
+
+                    <!-- CPU <-> RAM (fast, bidirectional) -->
+                    <circle r="3" fill="#f78166" filter="url(#glow)">
+                        <animateMotion dur="0.8s" repeatCount="indefinite" begin="0s">
+                            <mpath href="#dp-cpu-ram" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3" fill="#f78166" filter="url(#glow)">
+                        <animateMotion dur="0.8s" repeatCount="indefinite" begin="0.4s">
+                            <mpath href="#dp-cpu-ram" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3" fill="#58a6ff" filter="url(#glow)" opacity="0.8">
+                        <animateMotion dur="0.8s" repeatCount="indefinite" begin="0.2s" keyPoints="1;0" keyTimes="0;1"
+                            calcMode="linear">
+                            <mpath href="#dp-cpu-ram" />
+                        </animateMotion>
+                    </circle>
+                    <circle r="3" fill="#58a6ff" filter="url(#glow)" opacity="0.8">
+                        <animateMotion dur="0.8s" repeatCount="indefinite" begin="0.6s" keyPoints="1;0" keyTimes="0;1"
+                            calcMode="linear">
+                            <mpath href="#dp-cpu-ram" />
+                        </animateMotion>
+                    </circle>
+
+                </svg>
+                <div class="diagram-hint">click vào tầng trên bản đồ hoặc sidebar <kbd>&#x2191;</kbd><kbd>&#x2193;</kbd>
+                </div>
+            </div>
+
+            <div id="detail" style="display:none; flex-direction:column; flex:1;">
+                <div class="detail-header">
+                    <div class="detail-path">tầng-1 / <span id="d-path"></span></div>
+                    <div class="detail-title-row">
+                        <div class="detail-num" id="d-num"></div>
+                        <div class="detail-title" id="d-title"></div>
+                    </div>
+                    <div class="detail-sub" id="d-sub"></div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('info')">📋 info</button>
+                    <button class="tab" onclick="switchTab('cli')">💻 cli</button>
+                    <button class="tab" onclick="switchTab('example')">❓ example</button>
+                </div>
+
+                <div class="panel active" id="panel-info">
+                    <div class="info-desc" id="d-desc"></div>
+                    <ul class="info-list" id="d-list"></ul>
+                </div>
+
+                <div class="panel" id="panel-cli">
+                    <div class="cli-list" id="d-cli"></div>
+                </div>
+
+                <div class="panel" id="panel-example">
+                    <div class="example-box" id="d-example">
+                        <div class="example-q" id="d-ex-q"></div>
+                        <div class="example-a" id="d-ex-a"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER: Memory Hierarchy -->
+    <footer>
+        <div class="footer-label">memory hierarchy</div>
+        <div class="mem-hierarchy">
+            <div class="mem-item">
+                <div class="mem-label">CPU Register</div>
+                <div class="mem-speed" style="color:#f78166">~0.3 ns</div>
+                <div class="mem-bar" style="background:#f78166; width:100%"></div>
+            </div>
+            <div class="mem-item">
+                <div class="mem-label">L1 Cache</div>
+                <div class="mem-speed" style="color:#f0a070">~1 ns</div>
+                <div class="mem-bar" style="background:#f0a070; width:80%"></div>
+            </div>
+            <div class="mem-item">
+                <div class="mem-label">L2/L3 Cache</div>
+                <div class="mem-speed" style="color:#d29922">~10 ns</div>
+                <div class="mem-bar" style="background:#d29922; width:60%"></div>
+            </div>
+            <div class="mem-item">
+                <div class="mem-label">RAM</div>
+                <div class="mem-speed" style="color:#58a6ff">~100 ns</div>
+                <div class="mem-bar" style="background:#58a6ff; width:40%"></div>
+            </div>
+            <div class="mem-item">
+                <div class="mem-label">SSD</div>
+                <div class="mem-speed" style="color:#7ee787">~0.1 ms</div>
+                <div class="mem-bar" style="background:#7ee787; width:22%"></div>
+            </div>
+            <div class="mem-item">
+                <div class="mem-label">HDD</div>
+                <div class="mem-speed" style="color:#8b949e">~10 ms</div>
+                <div class="mem-bar" style="background:#8b949e; width:8%"></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const LAYERS = [
+            {
+                id: 'process', num: '⚙️', order: 0,
+                title: 'Process & Thread',
+                sub: 'Chương trình đang chạy',
+                color: '#a5a0e8', bg: 'rgba(165,160,232,0.08)',
+                desc: 'Khi bạn chạy <code>java Main</code>, OS tạo ra một <strong>process</strong> — đơn vị cô lập với PID riêng, memory space riêng. Bên trong process có thể có nhiều <strong>thread</strong> chia sẻ heap nhưng stack riêng mỗi thread.',
+                concepts: [
+                    '<strong>PID</strong>: Process ID — định danh duy nhất trong OS',
+                    '<strong>Stack</strong>: tự quản lý, nhỏ (~1–8 MB/thread), chứa biến local và call frames',
+                    '<strong>Heap</strong>: lớn, dùng chung trong process, GC dọn (Java) hoặc manual (C)',
+                    '<strong>Context switch</strong>: OS lưu state process này, chạy process khác — chi phí ~1–10µs',
+                    '<strong>Thread</strong>: lightweight — chia sẻ heap nhưng stack riêng, tạo nhanh hơn process',
+                ],
+                cli: [
+                    { cmd: 'ps aux', desc: 'Liệt kê tất cả process đang chạy với PID, %CPU, %MEM' },
+                    { cmd: 'top -H -p $(pgrep java)', desc: 'Xem thread-level của JVM process' },
+                    { cmd: 'cat /proc/$(pgrep java)/status', desc: 'Chi tiết: threads, memory, state của process' },
+                    { cmd: 'strace -p $(pgrep java) -e trace=clone,fork', desc: 'Bắt system calls tạo process/thread' },
+                    { cmd: 'ls -la /proc/$(pgrep java)/fd', desc: 'File descriptors process đang giữ mở' },
+                ],
+                exQ: 'Container là gì — thực sự bên trong?',
+                exA: 'Container không phải VM nhẹ. Bản chất container là một <strong>process được cô lập</strong> bằng 2 cơ chế của Linux kernel: <code>namespaces</code> (cô lập PID, network, filesystem) và <code>cgroups</code> (giới hạn CPU, RAM). Docker chỉ là tooling để quản lý 2 cơ chế này. Đó là tại sao container start nhanh — không cần boot OS mới, chỉ fork một process rồi apply isolation.'
+            },
+            {
+                id: 'os', num: '🏗️', order: 2,
+                title: 'Operating System',
+                sub: 'Quản lý tài nguyên, cầu nối sw↔hw',
+                color: '#56b6c2', bg: 'rgba(86,182,194,0.08)',
+                desc: 'Operating System là tầng phần mềm <strong>quản lý mọi tài nguyên</strong> máy tính. OS tạo process, quản lý virtual memory, điều phối CPU giữa các task, và trung gian giữa phần mềm với phần cứng qua <strong>system calls</strong>. Không có OS, mỗi chương trình phải tự nói chuyện với hardware.',
+                concepts: [
+                    '<strong>Kernel</strong>: lõi OS — chạy ở privileged mode, truy cập trực tiếp hardware',
+                    '<strong>System call</strong>: cổng duy nhất để user program nói chuyện với kernel — open(), read(), fork()...',
+                    '<strong>Scheduler</strong>: quyết định process/thread nào được chạy trên CPU — thuật toán CFS (Linux)',
+                    '<strong>Driver</strong>: module kernel nói chuyện với hardware cụ thể (disk, network, GPU)',
+                    '<strong>Interrupt</strong>: tín hiệu từ hardware → CPU tạm dừng, nhảy vào kernel xử lý',
+                ],
+                cli: [
+                    { cmd: 'uname -a', desc: 'Kernel version, architecture, hostname' },
+                    { cmd: 'dmesg | tail -20', desc: 'Kernel log — hardware events, driver messages' },
+                    { cmd: 'cat /proc/interrupts', desc: 'Bảng interrupt — số lần từng device interrupt CPU' },
+                    { cmd: 'strace -c java Main', desc: 'Tổng hợp system calls — đếm và thời gian từng loại' },
+                    { cmd: 'sysctl -a 2>/dev/null | head -30', desc: 'Kernel parameters đang active' },
+                ],
+                exQ: 'Tại sao "rm -rf /" cần sudo mà "kill -9" process của mình thì không?',
+                exA: 'Mỗi process chạy với một <strong>UID</strong> (user ID). OS kiểm tra quyền qua UID: bạn chỉ được kill process của mình (cùng UID), nhưng xóa file hệ thống cần UID=0 (root) vì file đó thuộc root. <code>sudo</code> tạm thời chuyển UID sang 0. Đây là <strong>permission model</strong> của OS — kernel kiểm tra mỗi system call. Nếu không có cơ chế này, bất kỳ process nào cũng có thể xóa kernel hoặc kill init process.'
+            },
+            {
+                id: 'cpu', num: '🧠', order: 2,
+                title: 'CPU',
+                sub: 'Fetch → Decode → Execute',
+                color: '#f78166', bg: 'rgba(247,129,102,0.08)',
+                desc: 'CPU chạy một vòng lặp vô tận: <strong>Fetch</strong> (lấy lệnh từ RAM/cache), <strong>Decode</strong> (hiểu lệnh đó làm gì), <strong>Execute</strong> (thực thi). Mọi chương trình Java bạn viết cuối cùng đều trở thành chuỗi instruction CPU.',
+                concepts: [
+                    '<strong>Cache L1/L2/L3</strong>: bộ nhớ cực nhanh ngay trong CPU — L1 ~0.3ns, L3 ~10ns',
+                    '<strong>Cache miss</strong>: dữ liệu không có trong cache → ra RAM (~100ns) — chậm 300x',
+                    '<strong>Cache line</strong>: CPU đọc RAM theo block 64 bytes, không đọc từng byte',
+                    '<strong>Multi-core</strong>: mỗi core là CPU độc lập, L1/L2 riêng, L3 shared',
+                    '<strong>Context switch</strong>: OS save/restore register khi chuyển task — ~1–10µs',
+                ],
+                cli: [
+                    { cmd: 'lscpu', desc: 'Số core, thread, cache size, architecture' },
+                    { cmd: 'cat /proc/cpuinfo | grep "model name" | head -1', desc: 'Model CPU và clock speed' },
+                    { cmd: 'top', desc: 'Cột %CPU — có thể > 100% nếu multi-thread' },
+                    { cmd: 'perf stat java Main 2>&1 | grep cache', desc: 'Cache miss rate thực tế' },
+                    { cmd: 'taskset -c 0 java -XX:+PrintGCDetails Main', desc: 'Ghim vào core 0, xem GC behavior' },
+                ],
+                exQ: 'Tại sao ArrayList nhanh hơn LinkedList khi iterate?',
+                exA: 'ArrayList lưu dữ liệu liên tiếp trong RAM. CPU cache đọc theo cache line (~64 bytes) nên khi đọc phần tử đầu, các phần tử tiếp theo đã nằm sẵn trong cache — <strong>cache hit</strong>, ~0.3ns/phần tử. LinkedList có node nằm rải rác khắp heap → mỗi <code>node.next</code> là cache miss → phải ra RAM ~100ns/phần tử. Đây là <strong>cache locality</strong> — lý do thực sự, không phải pointer arithmetic.'
+            },
+            {
+                id: 'ram', num: '🧩', order: 3,
+                title: 'RAM',
+                sub: 'Nơi dữ liệu sống khi chạy',
+                color: '#58a6ff', bg: 'rgba(88,166,255,0.08)',
+                desc: 'RAM là nơi tất cả dữ liệu của chương trình "sống" trong lúc chạy. Nhanh hơn disk ~1000x, nhưng mất khi tắt nguồn. Mỗi ô nhớ có địa chỉ (memory address) — CPU dùng địa chỉ để đọc/ghi.',
+                concepts: [
+                    '<strong>Memory layout</strong>: Code segment | Data | Heap (↑) | ... | Stack (↓)',
+                    '<strong>Stack</strong>: biến local, call frames — OS quản lý tự động, cực nhanh',
+                    '<strong>Heap</strong>: objects được new — quản lý bởi GC (Java) hoặc manual (C/C++)',
+                    '<strong>Reference</strong>: biến trong Java chứa địa chỉ của object, không phải object',
+                    '<strong>GC</strong>: garbage collector tự dọn object không còn reference — có stop-the-world pause',
+                ],
+                cli: [
+                    { cmd: 'free -h', desc: 'Tổng quan: total, used, free, buff/cache, available' },
+                    { cmd: 'cat /proc/meminfo', desc: 'Chi tiết: MemFree, Cached, SwapTotal, Dirty...' },
+                    { cmd: 'pmap -x $(pgrep java) | tail -1', desc: 'Tổng RSS và dirty pages' },
+                    { cmd: 'jcmd $(pgrep java) VM.native_memory', desc: 'JVM native memory breakdown' },
+                    { cmd: 'watch -n1 free -h', desc: 'Monitor RAM real-time mỗi giây' },
+                ],
+                exQ: 'StackOverflowError vs OutOfMemoryError — khác nhau thế nào?',
+                exA: '<strong>StackOverflowError</strong>: stack của một thread đầy. Mỗi function call push một frame (~100–1000 bytes) vào stack (~1–8MB/thread). Đệ quy không có base case → stack full → exception. Fix: kiểm tra logic đệ quy hoặc dùng iteration. <strong>OutOfMemoryError: Java heap space</strong>: heap đầy — GC không thể thu hồi đủ memory. Fix: tăng <code>-Xmx</code>, tìm memory leak bằng heap dump (<code>jmap -dump:format=b,file=heap.bin PID</code>).'
+            },
+            {
+                id: 'disk', num: '💽', order: 5,
+                title: 'Storage',
+                sub: 'Lưu trữ lâu dài',
+                color: '#7ee787', bg: 'rgba(126,231,135,0.08)',
+                desc: 'Disk lưu dữ liệu khi tắt nguồn. Chậm hơn RAM khoảng <strong>1000x</strong>. Đây là lý do caching, indexing, và thiết kế I/O pattern quan trọng trong mọi hệ thống production.',
+                concepts: [
+                    '<strong>HDD</strong>: đầu đọc cơ học, sequential ~200MB/s, random ~100 IOPS — seek time ~10ms',
+                    '<strong>SSD</strong>: điện tử, không có seek time, random ~100k IOPS, ~500MB/s–7GB/s (NVMe)',
+                    '<strong>Block/sector</strong>: đơn vị đọc/ghi nhỏ nhất ~4KB — file 1 byte cũng tốn 1 block',
+                    '<strong>Sequential vs Random</strong>: sequential đọc liên tiếp (nhanh), random đọc rải rác (chậm)',
+                    '<strong>Page cache</strong>: OS tự cache disk data trong RAM — đọc lại file thường là từ cache',
+                ],
+                cli: [
+                    { cmd: 'df -h', desc: 'Dung lượng và % used từng partition' },
+                    { cmd: "du -sh * | sort -rh | head -10", desc: 'Top 10 folder/file nặng nhất' },
+                    { cmd: 'lsblk -o NAME,SIZE,TYPE,ROTA,MOUNTPOINT', desc: 'Danh sách block devices, ROTA=1 là HDD' },
+                    { cmd: 'iostat -dx 1 3', desc: 'Disk utilization: %util, await, r/s, w/s' },
+                    { cmd: 'hdparm -Tt /dev/sda', desc: 'Benchmark tốc độ đọc disk (cached và direct)' },
+                ],
+                exQ: 'Tại sao copy 1000 file nhỏ chậm hơn 1 file lớn cùng dung lượng?',
+                exA: 'Mỗi file yêu cầu OS thực hiện: lookup inode trong filesystem, tìm vị trí trống, ghi metadata, ghi data, update directory entry. Với HDD, mỗi bước là một <strong>random seek</strong> (~10ms mỗi lần đầu đọc di chuyển). 1000 file × nhiều seek = hàng chục giây. Ngược lại, 1 file lớn chỉ cần tìm vị trí 1 lần rồi ghi tuần tự — không seek thêm. SSD không bị ảnh hưởng nhiều bởi random seek, nhưng overhead syscall và metadata vẫn là bottleneck với số lượng file cực lớn.'
+            },
+            {
+                id: 'binary', num: '🔢', order: 6,
+                title: 'Binary',
+                sub: 'Mọi thứ là 0 và 1',
+                color: '#8b949e', bg: 'rgba(139,148,158,0.06)',
+                desc: 'Máy tính chỉ hiểu 2 trạng thái: có điện (1) và không có điện (0). Mọi thứ — số, chữ, màu sắc, âm thanh, chương trình — đều được biểu diễn bằng chuỗi bit. Đây là ngôn ngữ duy nhất CPU thực sự nói.',
+                concepts: [
+                    '<strong>bit</strong>: đơn vị nhỏ nhất — 0 hoặc 1',
+                    '<strong>byte</strong>: 8 bit — 256 giá trị (0–255) — đơn vị cơ bản của bộ nhớ',
+                    '<strong>Two\'s complement</strong>: cách biểu diễn số âm — int max = 2,147,483,647',
+                    '<strong>IEEE 754 float</strong>: số thực dấu phẩy động — lý do 0.1 + 0.2 ≠ 0.3',
+                    '<strong>UTF-8</strong>: encode Unicode thành bytes — tiếng Việt cần 3 bytes/ký tự',
+                ],
+                cli: [
+                    { cmd: 'xxd file.bin | head -5', desc: 'Xem file dưới dạng hex dump + ASCII' },
+                    { cmd: 'hexdump -C file.bin | head', desc: 'Hex + printable ASCII side by side' },
+                    { cmd: 'file *', desc: 'Phát hiện loại file từ magic bytes (không dựa vào extension)' },
+                    { cmd: "python3 -c \"import struct; print(struct.pack('f', 0.1).hex())\"", desc: 'Xem 0.1 float trông như thế nào trong bộ nhớ' },
+                    { cmd: 'echo -n "Hello" | xxd', desc: 'Xem ký tự ASCII → hex value tương ứng' },
+                ],
+                exQ: 'Tại sao 0.1 + 0.2 != 0.3 trong Java (và hầu hết ngôn ngữ)?',
+                exA: '0.1 không thể biểu diễn chính xác trong binary (giống 1/3 = 0.333... trong thập phân). 0.1 trong IEEE 754 thực ra là 0.1000000000000000055511151231... Khi cộng 2 xấp xỉ, sai số tích lũy cho kết quả 0.30000000000000004. Dùng <code>BigDecimal("0.1").add(new BigDecimal("0.2"))</code> khi cần tính toán tài chính. Rule quan trọng: <strong>không bao giờ so sánh float/double bằng ==</strong>, dùng Math.abs(a - b) < epsilon.'
+            }
+        ];
+
+        // ID order for keyboard nav
+        let currentId = null;
+        let currentTab = 'info';
+
+        const ORDER = ['process', 'os', 'cpu', 'ram', 'disk', 'binary'];
+
+        function setVar(el, color, bg) {
+            el.style.setProperty('--node-color', color);
+            el.style.setProperty('--node-bg', bg);
+        }
+
+        function renderNode(id) {
+            const l = LAYERS.find(x => x.id === id);
+            const el = document.getElementById('node-' + id);
+            if (!el) return;
+            el.innerHTML = `
+    <div class="layer-node" id="ln-${id}" onclick="selectLayer('${id}')" tabindex="0">
+      <div class="node-row">
+        <span class="node-num">${l.num}</span>
+        <span class="node-title">${l.title}</span>
+      </div>
+      <div class="node-sub">${l.sub}</div>
+    </div>`;
+            setVar(el.querySelector('.layer-node'), l.color, l.bg);
+        }
+
+        function selectLayer(id) {
+            // deactivate previous node
+            if (currentId) {
+                const prev = document.getElementById('ln-' + currentId);
+                if (prev) prev.classList.remove('active');
+            }
+            // deactivate os group
+            const osGroup = document.querySelector('.os-group');
+            if (osGroup) osGroup.classList.remove('active');
+
+            currentId = id;
+            const l = LAYERS.find(x => x.id === id);
+
+            // activate: node or os group
+            if (id === 'os') {
+                if (osGroup) osGroup.classList.add('active');
+            } else {
+                const node = document.getElementById('ln-' + id);
+                if (node) node.classList.add('active');
+            }
+
+            // update detail panel
+            document.getElementById('empty').style.display = 'none';
+            const detail = document.getElementById('detail');
+            detail.style.display = 'flex';
+            setVar(detail, l.color, l.bg);
+
+            document.getElementById('d-path').textContent = l.id;
+            document.getElementById('d-num').textContent = l.num;
+            document.getElementById('d-title').textContent = l.title;
+            document.getElementById('d-sub').textContent = l.sub;
+            document.getElementById('d-desc').innerHTML = l.desc;
+
+            // concepts list
+            const list = document.getElementById('d-list');
+            list.innerHTML = l.concepts.map(c => `<li>${c}</li>`).join('');
+
+            // CLI
+            const cli = document.getElementById('d-cli');
+            cli.innerHTML = l.cli.map((c, i) => `
+    <div class="cli-item">
+      <div class="cli-cmd">
+        <span class="cli-prompt">▶</span>
+        <span class="cli-text">${c.cmd}</span>
+        <button class="cli-copy" onclick="copyCmd(this,'${c.cmd.replace(/'/g, "\\'")}')">📋</button>
+      </div>
+      <div class="cli-desc">${c.desc}</div>
+    </div>`).join('');
+
+            // example
+            document.getElementById('d-ex-q').innerHTML = l.exQ;
+            document.getElementById('d-ex-a').innerHTML = l.exA;
+
+            // keep current tab or reset to info
+            switchTab(currentTab, true);
+        }
+
+        function switchTab(tab, silent) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', ['info', 'cli', 'example'][i] === tab);
+            });
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById('panel-' + tab);
+            if (panel) panel.classList.add('active');
+        }
+
+        function copyCmd(btn, cmd) {
+            navigator.clipboard.writeText(cmd).then(() => {
+                btn.textContent = '✅';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500);
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT') return;
+            const idx = currentId ? ORDER.indexOf(currentId) : -1;
+            if (e.key === 'ArrowDown' || e.key === 'j') {
+                e.preventDefault();
+                selectLayer(ORDER[Math.min(idx + 1, ORDER.length - 1)]);
+            } else if (e.key === 'ArrowUp' || e.key === 'k') {
+                e.preventDefault();
+                selectLayer(ORDER[Math.max(idx - 1, 0)]);
+            } else if (e.key === '1') switchTab('info');
+            else if (e.key === '2') switchTab('cli');
+            else if (e.key === '3') switchTab('example');
+            else if (e.key === 'c' && currentId) {
+                const cliItems = document.querySelectorAll('.cli-item');
+                if (cliItems[0]) {
+                    const btn = cliItems[0].querySelector('.cli-copy');
+                    const cmd = LAYERS.find(x => x.id === currentId).cli[0].cmd;
+                    copyCmd(btn, cmd);
+                }
+            }
+        });
+
+        // Init
+        ORDER.forEach(renderNode);
+        // Show animated diagram on load (don't auto-select a layer)
+
+        // ─── RESIZER DRAG ───
+        const resizer = document.getElementById('resizer');
+        const sidebar = document.getElementById('sidebar');
+        const MIN_W = 200, MAX_W = 420;
+
+        resizer.addEventListener('mousedown', e => {
+            e.preventDefault();
+            resizer.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+
+            const startX = e.clientX;
+            const startW = sidebar.offsetWidth;
+
+            function onMove(e) {
+                const w = Math.min(MAX_W, Math.max(MIN_W, startW - (e.clientX - startX)));
+                sidebar.style.width = w + 'px';
+            }
+
+            function onUp() {
+                resizer.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            }
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    </script>
+</body>
+
+</html>

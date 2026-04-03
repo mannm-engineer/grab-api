@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETL Data & Processing Flow</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg: #1a1b1e;
+      --surface: #25262b;
+      --surface-inner: #2c2e33;
+      --border: #495057;
+      --border-light: #5c636a;
+      --text: #dee2e6;
+      --text-dim: #868e96;
+      --blue: #748ffc;
+      --blue-glow: rgba(116, 143, 252, 0.15);
+      --orange: #ffa94d;
+      --orange-glow: rgba(255, 169, 77, 0.12);
+      --green: #69db7c;
+      --green-dark: #2b8a3e;
+      --green-deeper: #1e7b34;
+      --green-glow: rgba(105, 219, 124, 0.1);
+      --font: 'Geist Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px 60px;
+    }
+
+    .diagram {
+      position: relative;
+      width: 1100px;
+      min-height: 1260px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 40px;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .legend-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .legend-line {
+      width: 60px;
+      height: 2px;
+      position: relative;
+    }
+
+    .legend-line::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border: 5px solid transparent;
+    }
+
+    .legend-line.data {
+      background: var(--blue);
+    }
+
+    .legend-line.data::after {
+      border-left-color: var(--blue);
+    }
+
+    .legend-line.control {
+      background: repeating-linear-gradient(90deg,
+          var(--orange) 0px, var(--orange) 8px,
+          transparent 8px, transparent 14px);
+    }
+
+    .legend-line.control::after {
+      border-left-color: var(--orange);
+    }
+
+    .legend-data-text {
+      color: var(--blue);
+    }
+
+    .legend-ctrl-text {
+      color: var(--orange);
+    }
+
+    /* ── Nodes ── */
+    .node {
+      position: absolute;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .node-default {
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .node-default:hover {
+      box-shadow: 0 0 20px rgba(73, 80, 87, 0.3);
+    }
+
+    .node-green {
+      background: var(--green-dark);
+      border: 1px solid var(--green);
+    }
+
+    .node-green:hover {
+      box-shadow: 0 0 24px var(--green-glow);
+    }
+
+    .node-name {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .node-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* ── Background Job (outer container) ── */
+    .job-outer {
+      position: absolute;
+      top: 280px;
+      left: 140px;
+      width: 540px;
+      height: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+    }
+
+    .job-outer:hover {
+      box-shadow: 0 0 30px rgba(73, 80, 87, 0.25);
+    }
+
+    .job-outer-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .job-inner {
+      background: var(--surface-inner);
+      border: 1px solid #3a3d42;
+      border-radius: 8px;
+      padding: 16px 20px;
+      height: 120px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .start-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .etl-pipeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      flex: 1;
+    }
+
+    .etl-step {
+      width: 120px;
+      text-align: center;
+      padding: 10px 18px;
+      border-radius: 6px;
+      background: #35373d;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .etl-step:hover {
+      transform: translateY(-2px);
+    }
+
+    .etl-step.extract {
+      color: var(--blue);
+      border-color: rgba(116, 143, 252, 0.4);
+    }
+
+    .etl-step.extract:hover {
+      box-shadow: 0 4px 16px var(--blue-glow);
+    }
+
+    .etl-step.transform {
+      color: var(--orange);
+      border-color: rgba(255, 169, 77, 0.4);
+    }
+
+    .etl-step.transform:hover {
+      box-shadow: 0 4px 16px var(--orange-glow);
+    }
+
+    .etl-step.load {
+      color: var(--green);
+      border-color: rgba(105, 219, 124, 0.4);
+    }
+
+    .etl-step.load:hover {
+      box-shadow: 0 4px 16px var(--green-glow);
+    }
+
+    .etl-arrow {
+      width: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      color: var(--orange);
+      font-size: 13px;
+      letter-spacing: -1px;
+    }
+
+    /* ── SVG Connectors ── */
+    svg.connectors {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .line-data {
+      stroke: var(--blue);
+      stroke-width: 1.5;
+      fill: none;
+      opacity: 0.3;
+    }
+
+    .line-data-flow {
+      stroke: var(--blue);
+      stroke-width: 1.5;
+      fill: none;
+      stroke-dasharray: 12 38;
+      animation: marchFlow 2s linear infinite;
+    }
+
+    .line-control {
+      stroke: var(--orange);
+      stroke-width: 1.5;
+      stroke-dasharray: 8 6;
+      fill: none;
+      animation: marchControl 1s linear infinite;
+    }
+
+    .line-ghost {
+      stroke: var(--text-dim);
+      stroke-width: 1;
+      stroke-dasharray: 3 4;
+      fill: none;
+      opacity: 0.3;
+    }
+
+    .arrow-data {
+      fill: var(--blue);
+    }
+
+    .arrow-control {
+      fill: var(--orange);
+    }
+
+    /* ── Annotation labels ── */
+    .annotation {
+      position: absolute;
+      font-size: 12px;
+      font-weight: 400;
+      pointer-events: none;
+    }
+
+    .annotation.blue {
+      color: var(--blue);
+      opacity: 0.85;
+    }
+
+    .annotation.orange {
+      color: var(--orange);
+      opacity: 0.85;
+    }
+
+    .annotation.dim {
+      color: var(--text-dim);
+      opacity: 0.55;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* ── BI Group container ── */
+    .bi-group {
+      position: absolute;
+      border: 1px dashed rgba(116, 143, 252, 0.35);
+      border-radius: 12px;
+      background: rgba(116, 143, 252, 0.03);
+    }
+
+    .bi-group-label {
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      background: var(--bg);
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue);
+      opacity: 0.8;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Inner table box for PG ── */
+    .pg-tables {
+      margin-top: 5px;
+      background: var(--green-deeper);
+      border: 1px solid rgba(105, 219, 124, 0.3);
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 12px;
+      color: #b2f2bb;
+      line-height: 1.6;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes marchFlow {
+      from {
+        stroke-dashoffset: 50;
+      }
+
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes marchControl {
+      from {
+        stroke-dashoffset: 14;
+      }
+
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .node,
+    .job-outer,
+    .legend {
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .node:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .node:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    .node:nth-child(4) {
+      animation-delay: 0.5s;
+    }
+
+    .job-outer {
+      animation-delay: 0.2s;
+    }
+
+    svg.connectors .line-ghost {
+      animation: none;
+    }
+
+    .annotation {
+      animation: fadeUp 0.4s ease both;
+      animation-delay: 0.7s;
+    }
+
+    /* ── Section divider ── */
+    .section-divider {
+      position: absolute;
+      left: 10px;
+      width: calc(100% - 20px);
+      height: 1px;
+      background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 6px, transparent 6px, transparent 13px);
+    }
+
+    .section-label {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 3px;
+      pointer-events: none;
+    }
+
+    /* ── External / Primary system nodes ── */
+    .node-external {
+      background: var(--surface);
+      border: 1px solid rgba(255, 169, 77, 0.5);
+    }
+
+    .node-external:hover {
+      box-shadow: 0 0 16px var(--orange-glow);
+    }
+
+    /* ── Kafka broker node ── */
+    .node-kafka {
+      background: #1a2e1f;
+      border: 1px solid rgba(105, 219, 124, 0.6);
+    }
+
+    .node-kafka:hover {
+      box-shadow: 0 0 20px rgba(105, 219, 124, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="diagram">
+
+    <!-- Legend -->
+    <div class="legend">
+      <div>
+        <div class="legend-title">Chú thích ký hiệu</div>
+        <div style="display:flex; gap:36px;">
+          <div class="legend-item">
+            <div class="legend-line data"></div>
+            <span class="legend-data-text">Luồng dữ liệu (Data Flow) — dữ liệu di chuyển</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line control"></div>
+            <span class="legend-ctrl-text">Luồng xử lý (Control Flow) — trigger / điều khiển</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BI Group (Background Job + BI source node) -->
+    <div class="bi-group" style="top:255px; left:10px; width:680px; height:430px;">
+      <span class="bi-group-label">BI</span>
+    </div>
+
+    <!-- ECM Group (PostgreSQL bi_matchingdata) -->
+    <div class="bi-group"
+      style="top:510px; left:800px; width:248px; height:165px; border-color:rgba(105,219,124,0.35); background:rgba(105,219,124,0.03);">
+      <span class="bi-group-label" style="color:var(--green);">ECM</span>
+    </div>
+
+    <!-- Scheduler -->
+    <div class="node node-default" style="top:130px; left:310px; width:200px; height:80px;">
+      <div class="node-name">Scheduler</div>
+      <div class="node-sub">(Cron / Timer)</div>
+    </div>
+
+    <!-- Background Job -->
+    <div class="job-outer">
+      <div class="job-outer-label">Background Job &nbsp;<span
+          style="color:var(--blue);font-size:12px;opacity:0.7;">(BI)</span></div>
+      <div class="job-inner">
+        <div class="start-label">▶ start</div>
+        <div class="etl-pipeline">
+          <div class="etl-step extract">Extract</div>
+          <div class="etl-arrow">╌╌╌►</div>
+          <div class="etl-step transform">Transform</div>
+          <div class="etl-arrow">╌╌╌►</div>
+          <div class="etl-step load">Load</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BI node (Source) -->
+    <div class="node node-default" style="top:530px; left:20px; width:220px; height:130px;">
+      <div class="node-name">BI</div>
+      <div class="node-sub">(Business Intelligence)</div>
+      <div style="width:80%; height:1px; background:var(--border); margin:8px 0;"></div>
+      <div class="node-sub" style="color:var(--blue); font-size:13px;">raw data</div>
+    </div>
+
+    <!-- PostgreSQL Schema A -->
+    <div class="node node-green"
+      style="top:530px; left:810px; width:220px; height:130px; align-items:center; padding:10px;">
+      <div class="node-name" style="color:#fff;">PostgreSQL</div>
+      <div class="node-sub" style="color:#b2f2bb; font-size:14px;">bi_matchingdata</div>
+      <div class="pg-tables">
+        tb_md_*<br>sf_* views
+      </div>
+    </div>
+
+    <!-- Consumer -->
+    <div class="node node-default" style="top:760px; left:820px; width:200px; height:80px;">
+      <div class="node-name">Consumer</div>
+      <div class="node-sub">(App / BI)</div>
+    </div>
+
+    <!-- SVG Connectors -->
+    <svg class="connectors" viewBox="0 0 1100 1260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-data" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" class="arrow-data" />
+        </marker>
+        <marker id="arrow-ctrl" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" class="arrow-control" />
+        </marker>
+      </defs>
+
+      <!-- (1) Scheduler bottom-center(410,210) → job-outer top-center(410,280): straight vertical -->
+      <line x1="410" y1="210" x2="410" y2="280" class="line-control" marker-end="url(#arrow-ctrl)" />
+
+      <!-- (2) BI top-center(130,530) → Extract bottom-center(240,414): arrives vertically, touches Extract border -->
+      <path d="M 130 530 C 200 530, 240 470, 240 414" class="line-data" />
+      <path d="M 130 530 C 200 530, 240 470, 240 414" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0s;" />
+
+      <!-- (3) ghost line from Transform bottom-center(410,414) down -->
+      <line x1="410" y1="414" x2="410" y2="490" class="line-ghost" />
+
+      <!-- (4) Load bottom-center(580,414) → PG left-center(810,595): departs Load bottom -->
+      <path d="M 580 414 C 580 595, 760 595, 810 595" class="line-data" />
+      <path d="M 580 414 C 580 595, 760 595, 810 595" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0.7s;" />
+
+      <!-- (5) PostgreSQL left-center(810,595) → Consumer top-center(920,760) -->
+      <line x1="920" y1="660" x2="920" y2="760" class="line-data" />
+      <line x1="920" y1="660" x2="920" y2="760" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:1.3s;" />
+
+      <!-- ══ NEW FLOW ══ -->
+      <!-- (6a) Partner right(180,975) → Kafka left(370,1020): arrives horizontally -->
+      <path d="M 180 975 C 275 975, 310 1020, 370 1020" class="line-data" />
+      <path d="M 180 975 C 275 975, 310 1020, 370 1020" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0s;" />
+
+      <!-- (6b) Offer right(180,1040) → Kafka left-center(370,1040): straight -->
+      <line x1="180" y1="1040" x2="370" y2="1040" class="line-data" />
+      <line x1="180" y1="1040" x2="370" y2="1040" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0.3s;" />
+
+      <!-- (6c) Policy right(180,1105) → Kafka left(370,1060): arrives horizontally -->
+      <path d="M 180 1105 C 275 1105, 310 1060, 370 1060" class="line-data" />
+      <path d="M 180 1105 C 275 1105, 310 1060, 370 1060" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0.6s;" />
+
+      <!-- (7) Kafka right(470,1040) → ECM Consumer left(580,1040): 110px -->
+      <line x1="470" y1="1040" x2="580" y2="1040" class="line-data" />
+      <line x1="470" y1="1040" x2="580" y2="1040" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:0.9s;" />
+
+      <!-- (8) ECM Consumer right(705,1040) → parsys left(815,1040): 110px -->
+      <line x1="705" y1="1040" x2="815" y2="1040" class="line-data" />
+      <line x1="705" y1="1040" x2="815" y2="1040" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:1.2s;" />
+
+      <!-- (9) parsys bottom-center(920,1110) → Consumer top-center(920,1165): straight -->
+      <line x1="920" y1="1110" x2="920" y2="1165" class="line-data" />
+      <line x1="920" y1="1110" x2="920" y2="1165" class="line-data-flow" marker-end="url(#arrow-data)"
+        style="animation-delay:1.5s;" />
+    </svg>
+
+    <div class="annotation orange" style="top:235px; left:415px;">(1) Trigger định kỳ (control)</div>
+    <div class="annotation blue" style="top:490px; left:155px;">(2) Read data</div>
+    <div class="annotation dim" style="top:490px; left:415px; line-height:1.6;">
+      (3) In-memory transform<br>&nbsp;&nbsp;&nbsp;&nbsp;(no external I/O)
+    </div>
+    <div class="annotation blue" style="top:520px; left:690px;">(4) Write data</div>
+    <div class="annotation blue" style="top:720px; left:935px;">(5) Query data</div>
+
+    <!-- Section labels -->
+    <div class="section-label"
+      style="top:95px; left:10px; color:var(--text-dim); background:var(--bg); font-size:13px;">① Flow hiện tại (sắp
+      deprecated)</div>
+
+    <!-- Section divider -->
+    <div class="section-divider" style="top:852px;"></div>
+    <div class="section-label" style="top:865px; left:10px; color:var(--green); background:var(--bg);">② Kiến trúc mới —
+      Kafka-based</div>
+
+    <!-- Primary Systems group -->
+    <div class="bi-group"
+      style="top:933px; left:8px; width:186px; height:212px; border-color:rgba(255,169,77,0.35); background:rgba(255,169,77,0.03);">
+      <span class="bi-group-label" style="color:var(--orange);">Primary Systems</span>
+    </div>
+
+    <!-- ECM group (new flow) -->
+    <div class="bi-group"
+      style="top:968px; left:558px; width:482px; height:172px; border-color:rgba(105,219,124,0.35); background:rgba(105,219,124,0.03);">
+      <span class="bi-group-label" style="color:var(--green);">ECM</span>
+    </div>
+
+    <!-- Partner Center -->
+    <div class="node node-external" style="top:950px; left:20px; width:160px; height:50px;">
+      <div class="node-name" style="font-size:13px;">Partner Center</div>
+    </div>
+
+    <!-- Offer Center -->
+    <div class="node node-external" style="top:1015px; left:20px; width:160px; height:50px;">
+      <div class="node-name" style="font-size:13px;">Offer Center</div>
+    </div>
+
+    <!-- Policy Center -->
+    <div class="node node-external" style="top:1080px; left:20px; width:160px; height:50px;">
+      <div class="node-name" style="font-size:13px;">Policy Center</div>
+    </div>
+
+    <!-- Kafka Broker -->
+    <div class="node node-kafka" style="top:1000px; left:370px; width:100px; height:80px;">
+      <div class="node-name" style="color:#69db7c; font-size:15px;">Kafka</div>
+      <div class="node-sub">broker</div>
+    </div>
+
+    <!-- ECM Kafka Consumer -->
+    <div class="node node-default" style="top:1000px; left:580px; width:125px; height:80px;">
+      <div class="node-name" style="font-size:13px;">Kafka Consumer</div>
+      <div class="node-sub">(ECM service)</div>
+    </div>
+
+    <!-- parsys_matchingdata -->
+    <div class="node node-green"
+      style="top:980px; left:815px; width:210px; height:130px; align-items:center; padding:10px;">
+      <div class="node-name" style="color:#fff;">PostgreSQL</div>
+      <div class="node-sub" style="color:#b2f2bb; font-size:14px;">parsys_matchingdata</div>
+      <div class="pg-tables">tb_md_*<br>sf_* views</div>
+    </div>
+
+    <!-- Consumer (new flow) -->
+    <div class="node node-default" style="top:1165px; left:820px; width:200px; height:80px;">
+      <div class="node-name">Consumer</div>
+      <div class="node-sub">(App / BI)</div>
+    </div>
+
+    <!-- New flow annotations -->
+    <div class="annotation blue" style="top:1003px; left:188px;">(6) publish events</div>
+    <div class="annotation blue" style="top:1023px; left:486px;">(7) consume</div>
+    <div class="annotation blue" style="top:1023px; left:729px;">(8) write</div>
+    <div class="annotation blue" style="top:1130px; left:925px;">(9) query</div>
+
+  </div>
+
+</body>
+
+</html>
