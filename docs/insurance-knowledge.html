@@ -1,0 +1,1165 @@
+
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insurance Domain Knowledge — Hành trình của Thomas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --bg2: #161b22;
+            --bg3: #1c2333;
+            --bg-card: #1a1f2e;
+            --text: #e6edf3;
+            --text2: #8b949e;
+            --text3: #6e7681;
+            --border: #30363d;
+            --border2: #21262d;
+            --blue: #58a6ff;
+            --blue-bg: rgba(88, 166, 255, 0.08);
+            --green: #3fb950;
+            --green-bg: rgba(63, 185, 80, 0.08);
+            --amber: #d29922;
+            --amber-bg: rgba(210, 153, 34, 0.08);
+            --red: #f85149;
+            --red-bg: rgba(248, 81, 73, 0.08);
+            --purple: #bc8cff;
+            --purple-bg: rgba(188, 140, 255, 0.08);
+            --pink: #f778ba;
+            --pink-bg: rgba(247, 120, 186, 0.08);
+            --teal: #56d4dd;
+            --teal-bg: rgba(86, 212, 221, 0.08);
+            --coral: #f0997b;
+            --coral-bg: rgba(240, 153, 123, 0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "Geist Mono", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .hero {
+            padding: 80px 40px 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(88, 166, 255, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-family: "Geist Mono", monospace;
+            font-size: clamp(24px, 4vw, 42px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            color: var(--text2);
+            font-size: 18px;
+            max-width: 640px;
+            margin: 0 auto 32px;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-family: "Geist Mono", monospace;
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        .hero-tag .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border2);
+            padding: 0 40px;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 0;
+            list-style: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        nav ul::-webkit-scrollbar {
+            display: none;
+        }
+
+        nav a {
+            display: block;
+            padding: 14px 18px;
+            font-size: 13px;
+            font-family: "Geist Mono", monospace;
+            color: var(--text2);
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--text);
+            border-bottom-color: var(--blue);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        section {
+            padding: 60px 0;
+        }
+
+        section h2 {
+            font-family: "Geist Mono", monospace;
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        section h2 .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        section .subtitle {
+            color: var(--text2);
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .ascii-flow {
+            font-family: "Geist Mono", "Consolas", monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text2);
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 20px;
+            overflow-x: auto;
+            white-space: pre;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+            font-variant-ligatures: none;
+            font-feature-settings: "liga" 0, "calt" 0, "tnum" 1;
+            font-weight: 400;
+            letter-spacing: 0;
+            width: fit-content;
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+        }
+
+        .journey-token {
+            position: absolute;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 14px #22c55e, 0 0 6px #22c55e, 0 0 2px #ffffff;
+            pointer-events: none;
+            z-index: 2;
+            animation: journey-trace 26s linear infinite;
+        }
+
+        @keyframes journey-trace {
+            0% {
+                top: 88px;
+                left: calc(15.5px + 3.5ch);
+                opacity: 0;
+            }
+
+            2% {
+                opacity: 1;
+            }
+
+            /* ① Trigger */
+            3% {
+                top: 88px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ② Awareness */
+            5% {
+                top: 166px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ③ Research */
+            7% {
+                top: 244px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ④ Contact */
+            9% {
+                top: 322px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ⑤ Choose PRODUCT */
+            11% {
+                top: 400px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ⑥ QUOTE Request (customer) */
+            13% {
+                top: 478px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ───► ⑦ Calculator (insurer) */
+            23% {
+                top: 478px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ⑧ QUOTE Issued (insurer) */
+            25% {
+                top: 556px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ◄─── start return */
+            27% {
+                top: 595px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ◄─── midpoint */
+            31% {
+                top: 595px;
+                left: calc(15.5px + 30ch);
+            }
+
+            /* ⑨ Receive QUOTE (customer) */
+            35% {
+                top: 595px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ⑩ Compare / Decide */
+            37% {
+                top: 653px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ⑪ Application (customer) */
+            39% {
+                top: 712px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ───► ⑫ Receive Proposal (insurer) */
+            49% {
+                top: 712px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ⑬ Underwriting (insurer) */
+            52% {
+                top: 829px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* │ through branch structure */
+            55% {
+                top: 907px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* Approve */
+            57% {
+                top: 965px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ⑭ OFFER Issued (insurer) */
+            59% {
+                top: 1024px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ◄─── start return */
+            61% {
+                top: 1063px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            /* ◄─── midpoint */
+            65% {
+                top: 1063px;
+                left: calc(15.5px + 30ch);
+            }
+
+            /* ⑮ Receive OFFER (customer) */
+            69% {
+                top: 1063px;
+                left: calc(15.5px + 3.5ch);
+                opacity: 1;
+            }
+
+            /* ⑯ Accept & Sign (customer) */
+            71% {
+                top: 1121px;
+                left: calc(15.5px + 3.5ch);
+            }
+
+            /* ───► ⑰ POLICY Issued (insurer) */
+            81% {
+                top: 1121px;
+                left: calc(15.5px + 56.5ch);
+            }
+
+            90% {
+                top: 1121px;
+                left: calc(15.5px + 56.5ch);
+                opacity: 1;
+            }
+
+            100% {
+                top: 1121px;
+                left: calc(15.5px + 56.5ch);
+                opacity: 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .journey-token {
+                animation: none;
+                display: none;
+            }
+        }
+
+        .ascii-flow * {
+            font-weight: inherit;
+        }
+
+        .ascii-flow::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .ascii-flow::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .ascii-flow .head {
+            color: var(--text);
+        }
+
+        .ascii-flow .id-purple {
+            color: var(--purple);
+        }
+
+        .ascii-flow .id-coral {
+            color: var(--coral);
+        }
+
+        .ascii-flow .id-teal {
+            color: var(--teal);
+        }
+
+        .ascii-flow .id-amber {
+            color: var(--amber);
+        }
+
+        .ascii-flow .id-red {
+            color: var(--red);
+        }
+
+        .ascii-flow .id-pink {
+            color: var(--pink);
+        }
+
+        .ascii-flow .id-blue {
+            color: var(--blue);
+        }
+
+        .ascii-flow .id-green {
+            color: var(--green);
+        }
+
+        .ascii-flow .customer-side {
+            display: inline-block;
+            width: 56ch;
+        }
+
+        .ascii-flow .arrow {
+            color: var(--text3);
+        }
+
+        .ascii-flow .dim {
+            color: var(--text3);
+        }
+
+        .ascii-flow .entity {
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 0 0 1px currentColor;
+            border-radius: 3px;
+            padding: 1px 5px;
+            margin: 0 -5px;
+        }
+
+        @media (max-width: 640px) {
+            .ascii-flow {
+                font-size: 11px;
+            }
+        }
+
+        .tx-figure {
+            margin: 32px 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tx-figure-inner {
+            width: 100%;
+            background: #09090b;
+            border: 1px solid #18181b;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .tx-figure-title {
+            color: #71717a;
+            font-size: 12px;
+            font-family: "Geist Mono", monospace;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .tx-figure-caption {
+            text-align: center;
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 16px;
+            font-family: "Geist Mono", monospace;
+        }
+
+        .tx-diagram {
+            width: 100%;
+            height: auto;
+            max-width: 380px;
+        }
+
+        .tx-diagram.tx-entities {
+            max-width: 720px;
+        }
+
+        .tx-diagram .box-base {
+            fill: #09090b;
+            stroke: #3f3f46;
+            stroke-width: 1;
+        }
+
+        .tx-diagram .box-glow {
+            fill: #22c55e;
+            stroke: #22c55e;
+            stroke-width: 1.6;
+            opacity: 0;
+            animation: tx-flash 8s ease-in-out infinite;
+        }
+
+        .tx-diagram .conn-base {
+            stroke: #3f3f46;
+            stroke-width: 1.4;
+            fill: none;
+        }
+
+        .tx-diagram .conn-glow {
+            stroke: #22c55e;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0;
+            animation: tx-flash 8s ease-in-out infinite;
+        }
+
+        .tx-diagram .box-title {
+            font-family: "Geist Mono", monospace;
+            font-size: 11px;
+            font-weight: 700;
+            fill: #e4e4e7;
+        }
+
+        .tx-diagram .box-subtitle {
+            font-family: "Geist Mono", monospace;
+            font-size: 10px;
+            fill: #71717a;
+        }
+
+        .tx-diagram .token {
+            fill: #22c55e;
+        }
+
+        @keyframes tx-flash {
+
+            0%,
+            88%,
+            100% {
+                opacity: 0;
+            }
+
+            3% {
+                opacity: 0.6;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            18% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes tx-token-lc {
+            0% {
+                cy: 60px;
+                opacity: 0;
+            }
+
+            3% {
+                opacity: 1;
+            }
+
+            85% {
+                cy: 560px;
+                opacity: 1;
+            }
+
+            92% {
+                cy: 560px;
+                opacity: 0;
+            }
+
+            100% {
+                cy: 60px;
+                opacity: 0;
+            }
+        }
+
+        @keyframes tx-token-cl {
+            0% {
+                cy: 60px;
+                opacity: 0;
+            }
+
+            3% {
+                opacity: 1;
+            }
+
+            85% {
+                cy: 460px;
+                opacity: 1;
+            }
+
+            92% {
+                cy: 460px;
+                opacity: 0;
+            }
+
+            100% {
+                cy: 60px;
+                opacity: 0;
+            }
+        }
+
+        .tx-lifecycle .token {
+            animation: tx-token-lc 8s linear infinite;
+        }
+
+        .tx-claims .token {
+            animation: tx-token-cl 8s linear infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .tx-diagram .box-glow,
+            .tx-diagram .conn-glow,
+            .tx-diagram .token {
+                animation: none;
+            }
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border);
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .card h3 {
+            font-family: "Geist Mono", monospace;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: var(--text2);
+            line-height: 1.7;
+        }
+
+        .card .detail {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border2);
+        }
+
+        .card .detail-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-family: "Geist Mono", monospace;
+        }
+
+        .card .detail-item .label {
+            color: var(--text3);
+            min-width: 80px;
+        }
+
+        .card .detail-item .value {
+            color: var(--text2);
+        }
+
+        .card.c-blue {
+            border-left: 3px solid var(--blue);
+        }
+
+        .card.c-blue .card-icon {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        .card.c-blue h3 {
+            color: var(--blue);
+        }
+
+        .card.c-green {
+            border-left: 3px solid var(--green);
+        }
+
+        .card.c-green .card-icon {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .card.c-green h3 {
+            color: var(--green);
+        }
+
+        .card.c-amber {
+            border-left: 3px solid var(--amber);
+        }
+
+        .card.c-amber .card-icon {
+            background: var(--amber-bg);
+            color: var(--amber);
+        }
+
+        .card.c-amber h3 {
+            color: var(--amber);
+        }
+
+        .card.c-red {
+            border-left: 3px solid var(--red);
+        }
+
+        .card.c-red .card-icon {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .card.c-red h3 {
+            color: var(--red);
+        }
+
+        .card.c-purple {
+            border-left: 3px solid var(--purple);
+        }
+
+        .card.c-purple .card-icon {
+            background: var(--purple-bg);
+            color: var(--purple);
+        }
+
+        .card.c-purple h3 {
+            color: var(--purple);
+        }
+
+        .card.c-pink {
+            border-left: 3px solid var(--pink);
+        }
+
+        .card.c-pink .card-icon {
+            background: var(--pink-bg);
+            color: var(--pink);
+        }
+
+        .card.c-pink h3 {
+            color: var(--pink);
+        }
+
+        .card.c-teal {
+            border-left: 3px solid var(--teal);
+        }
+
+        .card.c-teal .card-icon {
+            background: var(--teal-bg);
+            color: var(--teal);
+        }
+
+        .card.c-teal h3 {
+            color: var(--teal);
+        }
+
+        .card.c-coral {
+            border-left: 3px solid var(--coral);
+        }
+
+        .card.c-coral .card-icon {
+            background: var(--coral-bg);
+            color: var(--coral);
+        }
+
+        .card.c-coral h3 {
+            color: var(--coral);
+        }
+
+        .glossary {
+            columns: 2;
+            column-gap: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .glossary {
+                columns: 1;
+            }
+        }
+
+        .glossary-item {
+            break-inside: avoid;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border2);
+            display: flex;
+            gap: 12px;
+            align-items: baseline;
+        }
+
+        .glossary-item .term {
+            font-family: "Geist Mono", monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--blue);
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+
+        .glossary-item .def {
+            font-size: 14px;
+            color: var(--text2);
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.06), rgba(188, 140, 255, 0.06));
+            border: 1px solid rgba(88, 166, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px 32px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .summary-box p {
+            font-family: "Geist Mono", monospace;
+            font-size: clamp(14px, 2vw, 17px);
+            color: var(--text2);
+            line-height: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .summary-box strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            color: var(--text3);
+            font-size: 12px;
+            font-family: "Geist Mono", monospace;
+            border-top: 1px solid var(--border2);
+        }
+
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(20px);
+            transition:
+                opacity 0.6s,
+                transform 0.6s;
+        }
+
+        [data-reveal].visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <div class="hero">
+        <h1>Insurance Domain Knowledge</h1>
+        <p>Câu chuyện bảo hiểm của Thomas — từ góc nhìn developer</p>
+        <div class="hero-tag"><span class="dot"></span> Swiss Insurance · FINMA · Spring Boot</div>
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="#intro">Bảo hiểm là gì?</a></li>
+            <li><a href="#journey">Flow điển hình</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <section id="intro" data-reveal>
+            <h2><span class="icon" style="background: var(--blue-bg); color: var(--blue)">◎</span> Bảo hiểm là gì?</h2>
+            <p class="subtitle">Ý tưởng cốt lõi: chia sẻ rủi ro giữa nhiều người.</p>
+
+            <div class="card c-blue">
+                <p style="line-height: 1.8; color: var(--text2);">
+                    Tưởng tượng <strong style="color: var(--text)">1.000 chủ xe</strong> trong một thành phố. Trung bình
+                    mỗi năm có
+                    <strong style="color: var(--text)">10 người</strong> bị tai nạn, mỗi vụ thiệt hại
+                    <strong style="color: var(--text)">100 triệu đồng</strong>. Nếu bạn xui xẻo nằm trong 10 người đó →
+                    bạn mất
+                    100 triệu, có thể phá sản. Nhưng nếu cả 1.000 người mỗi năm góp
+                    <strong style="color: var(--text)">1,2 triệu</strong> vào một quỹ chung → quỹ có 1,2 tỷ, đủ trả 1 tỷ
+                    cho
+                    10 nạn nhân + 200 triệu chi phí vận hành.
+                </p>
+                <p
+                    style="margin-top: 16px; color: var(--blue); font-family: 'Geist Mono', monospace; font-size: 15px;">
+                    → Mỗi người chỉ mất 1,2 triệu chắc chắn thay vì rủi ro mất 100 triệu. Đó là bảo hiểm.
+                </p>
+                <p style="margin-top: 16px; color: var(--text2);">
+                    <strong style="color: var(--text)">Công ty bảo hiểm</strong> = người đứng ra gom tiền + tính toán
+                    xác suất + trả tiền khi có sự cố.
+                </p>
+            </div>
+        </section>
+
+        <section id="journey" data-reveal>
+            <h2><span class="icon" style="background: var(--coral-bg); color: var(--coral)">→</span> Flow điển hình: Customer buy insurance</h2>
+            <p class="subtitle">Pipeline 17 bước · 2 phía (Customer ↔ Insurer) · 4 entity chính</p>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--blue-bg); border: 1px solid rgba(88,166,255,0.2); border-radius: 8px; padding: 6px 14px; font-size: 13px; color: var(--blue); font-family: 'Geist Mono', monospace;">📦 PRODUCT</span>
+                <span style="color: var(--text3);">·</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--teal-bg); border: 1px solid rgba(86,212,221,0.2); border-radius: 8px; padding: 6px 14px; font-size: 13px; color: var(--teal); font-family: 'Geist Mono', monospace;">🧾 QUOTE</span>
+                <span style="color: var(--text3);">·</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--green-bg); border: 1px solid rgba(63,185,80,0.2); border-radius: 8px; padding: 6px 14px; font-size: 13px; color: var(--green); font-family: 'Geist Mono', monospace;">🎁 OFFER</span>
+                <span style="color: var(--text3);">·</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--coral-bg); border: 1px solid rgba(240,153,123,0.2); border-radius: 8px; padding: 6px 14px; font-size: 13px; color: var(--coral); font-family: 'Geist Mono', monospace;">📜 POLICY</span>
+            </div>
+
+            <div style="background: rgba(210,153,34,0.06); border: 1px solid rgba(210,153,34,0.2); border-left: 3px solid var(--amber); border-radius: 10px; padding: 16px 20px; margin-bottom: 32px; display: flex; align-items: flex-start; gap: 14px;">
+                <span style="font-size: 18px; line-height: 1.6; flex-shrink: 0;">⚖️</span>
+                <div>
+                    <div style="font-family: 'Geist Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">
+                        Ranh giới pháp lý quan trọng nhất:
+                        <span style="color: var(--teal);">🧾 QUOTE</span>
+                        <span style="color: var(--text3);"> → </span>
+                        <span style="color: var(--green);">🎁 OFFER</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text2); font-family: 'Geist Mono', monospace; line-height: 1.7;">
+                        Trước ranh giới: chỉ là tham khảo, không ràng buộc.<br>
+                        Sau ranh giới: <strong style="color: var(--amber);">cam kết có ràng buộc pháp lý</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <pre class="ascii-flow"><span class="journey-token" aria-hidden="true"></span><span class="head">[ 👤 CUSTOMER SIDE ]                                             [ 🏢 INSURER SIDE ]</span>
+<span class="dim">─────────────────────────────────────────────────────────────────────────────────────</span>
+
+   <span class="id-blue">●  ① Trigger</span>
+      <span class="dim">"Mua xe mới / hết hạn HĐ cũ"</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+   <span class="id-blue">●  ② Awareness</span>
+      <span class="dim">"Mình cần bảo hiểm xe"</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+   <span class="id-blue">●  ③ Research</span>
+      <span class="dim">Google · Comparis · Trustpilot</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+   <span class="id-blue">●  ④ Contact</span>
+      <span class="dim">Website / Hotline / Agent</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+   <span class="id-blue">●  ⑤ Choose <span class="entity">PRODUCT</span> 📦</span>
+      <span class="dim">🚗 Vehicle · 🏠 Household · ✈️ Travel</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+<span class="customer-side">   <span class="id-teal">●  ⑥ <span class="entity">QUOTE</span> 🧾 Request</span>   <span class="arrow">───────────────────────────►</span></span><span class="id-teal">●  ⑦ Calculator</span>
+                                                        <span class="arrow">│</span> <span class="dim">(initQnB.js)</span>
+                                                        <span class="arrow">│</span>
+                                                        <span class="arrow">▼</span>
+                                                        <span class="id-teal">●  ⑧ <span class="entity">QUOTE</span> 🧾 Issued</span>
+                                                          <span class="dim">CHF 850/năm</span>
+   <span class="id-teal">●  ⑨ Receive <span class="entity">QUOTE</span> 🧾</span>   <span class="arrow">◄───────────────────────────</span>  <span class="dim">💡 Non-binding · instant</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+   <span class="id-purple">●  ⑩ Compare / Decide</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+<span class="customer-side">   <span class="id-amber">●  ⑪ Application</span>     <span class="arrow">──────────────────────────────►</span></span><span class="id-amber">●  ⑫ Receive Proposal</span>
+                                                        <span class="arrow">│</span> <span class="dim">• Số bằng lái</span>
+                                                        <span class="arrow">│</span> <span class="dim">• Lịch sử claim 5 năm</span>
+                                                        <span class="arrow">│</span> <span class="dim">• Vi phạm giao thông</span>
+                                                        <span class="arrow">│</span>
+                                                        <span class="arrow">▼</span>
+                                                        <span class="id-amber">●  ⑬ Underwriting</span>
+                                                        <span class="arrow">│</span> <span class="dim">Risk scoring</span>
+                                                        <span class="arrow">│</span> <span class="dim">Fraud check</span>
+                                                        <span class="arrow">│</span> <span class="dim">3rd-party DB</span>
+                                                        <span class="arrow">│</span>
+                                                   <span class="arrow">┌────┼────┐</span>
+                                                   <span class="arrow">▼</span>    <span class="arrow">▼</span>    <span class="arrow">▼</span>
+                                                <span class="id-red">Reject</span> <span class="id-green">Approve</span> <span class="id-amber">+Info</span>
+                                                        <span class="arrow">│</span>
+                                                        <span class="arrow">▼</span>
+                                                        <span class="id-green">●  ⑭ <span class="entity">OFFER</span> 🎁 Issued</span>
+                                                          <span class="dim">Binding · 30 days</span>
+   <span class="id-pink">●  ⑮ Receive <span class="entity">OFFER</span> 🎁</span>   <span class="arrow">◄───────────────────────────</span>  <span class="dim">CHF 920/năm</span>
+   <span class="arrow">│</span>
+   <span class="arrow">▼</span>
+<span class="customer-side">   <span class="id-pink">●  ⑯ Accept & Sign</span>   <span class="arrow">──────────────────────────────►</span></span><span class="id-coral">●  ⑰ <span class="entity">POLICY</span> 📜 Issued</span>
+                                                          <span class="dim">Contract active</span>
+                                                          <span class="dim">Coverage starts</span></pre>
+
+            <div class="grid-3" style="margin-top: 32px;">
+                <div class="card">
+                    <div class="card-icon" style="background: var(--blue-bg); color: var(--blue)">①</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">Pre-sales (①–⑤)</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        Customer tự phát sinh nhu cầu, nghiên cứu qua Google/Comparis/Trustpilot, tiếp cận kênh bán rồi mới chọn 📦 <strong style="color: var(--text)">PRODUCT</strong> cụ thể. Insurer chưa biết khách là ai.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: var(--teal-bg); color: var(--teal)">②</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">Quote (⑥–⑩)</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        Customer gửi request → Calculator trả 🧾 <strong style="color: var(--text)">QUOTE</strong> ước tính trong vài giây.
+                        <strong style="color: var(--text)">Không ràng buộc pháp lý</strong> — customer nhận, so sánh và quyết định có tiếp tục không.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: var(--amber-bg); color: var(--amber)">③</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">Application + Underwriting (⑪–⑬)</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        Khách nộp hồ sơ đầy đủ với nghĩa vụ trung thực. Insurer thẩm định rủi ro qua AI/agent → 3 nhánh outcome:
+                        <strong style="color: var(--red)">Reject</strong> · <strong style="color: var(--green)">Approve</strong> · <strong style="color: var(--amber)">+Info</strong>.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: var(--green-bg); color: var(--green)">④</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">OFFER → POLICY (⑭–⑰)</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        Insurer phát hành 🎁 <strong style="color: var(--text)">OFFER</strong> <strong style="color: var(--text)">có ràng buộc pháp lý</strong>,
+                        có thời hạn (vd 30 ngày). Khách ký xác nhận → OFFER chuyển thành 📜 <strong
+                            style="color: var(--text)">POLICY</strong>, hợp đồng có hiệu lực.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: var(--purple-bg); color: var(--purple)">⏱</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">Timing thực tế</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        Quote (⑥–⑩): ~5–15 phút online · Underwriting (⑬): vài giây (auto, low-risk) đến vài ngày (manual, high-risk).
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: var(--pink-bg); color: var(--pink)">⚖</div>
+                    <h3 style="color: var(--text); margin-bottom: 8px;">🧾 QUOTE ≠ 🎁 OFFER</h3>
+                    <p style="color: var(--text2); font-size: 14px;">
+                        🧾 QUOTE = "Giá khoảng bao nhiêu?" (tham khảo) · 🎁 OFFER = "Tôi bán giá này, ký đi là xong" (cam kết) — đó là sự khác biệt then chốt.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>Insurance Domain Knowledge · Built for developers · 2026</footer>
+
+    <script>
+        const obs = new IntersectionObserver(
+            (es) => {
+                es.forEach((e) => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add("visible");
+                        obs.unobserve(e.target);
+                    }
+                });
+            },
+            { threshold: 0.15 },
+        );
+        document.querySelectorAll("[data-reveal]").forEach((el) => obs.observe(el));
+
+        const links = document.querySelectorAll("nav a");
+        const sections = document.querySelectorAll("section[id]");
+        window.addEventListener("scroll", () => {
+            let cur = "";
+            sections.forEach((s) => {
+                if (window.scrollY >= s.offsetTop - 120) cur = s.id;
+            });
+            links.forEach((a) => {
+                a.classList.toggle("active", a.getAttribute("href") === "#" + cur);
+            });
+        });
+    </script>
+</body>
+
+</html>
