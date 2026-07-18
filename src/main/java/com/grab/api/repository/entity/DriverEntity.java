@@ -30,7 +30,7 @@ public record DriverEntity(
     @Column("rating") Double rating,
     @Column("is_verified") Boolean isVerified,
     @Column("balance") BigDecimal balance,
-    @Column("date_of_birth") LocalDate dateOfBirth,
+    @Column("birth_date") LocalDate birthDate,
     @MappedCollection(idColumn = "driver_id") Set<DriverDocumentEntity> documents,
     @Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) @Nullable AuditEntity audit)
     implements AuditableEntity {
@@ -47,7 +47,7 @@ public record DriverEntity(
         rating,
         isVerified,
         balance,
-        dateOfBirth,
+        birthDate,
         documents,
         audit);
   }
@@ -66,7 +66,7 @@ public record DriverEntity(
         information.rating(),
         information.isVerified(),
         information.balance(),
-        information.dateOfBirth(),
+        information.birthDate(),
         documents,
         Optional.ofNullable(information.audit()).map(AuditEntity::of).orElse(null));
   }
@@ -82,7 +82,7 @@ public record DriverEntity(
         rating,
         isVerified,
         balance,
-        dateOfBirth,
+        birthDate,
         documents.stream().map(DriverDocumentEntity::driverDocument).toList(),
         Objects.requireNonNull(audit).audit());
   }

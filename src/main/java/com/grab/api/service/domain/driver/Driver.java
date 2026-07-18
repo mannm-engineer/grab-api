@@ -30,7 +30,7 @@ public final class Driver {
         driverCreate.rating(),
         driverCreate.isVerified(),
         driverCreate.balance(),
-        driverCreate.dateOfBirth(),
+        driverCreate.birthDate(),
         driverDocuments,
         null));
   }

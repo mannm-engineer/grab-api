@@ -11,5 +11,5 @@ public record DriverCreate(
     Double rating,
     Boolean isVerified,
     BigDecimal balance,
-    LocalDate dateOfBirth,
+    LocalDate birthDate,
     List<DriverCreateDocument> documents) {}

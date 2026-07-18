@@ -52,7 +52,7 @@ public record DriverCreateDTO(
     BigDecimal balance,
 
     @Schema(description = "Date of birth of the driver", example = "1990-01-15") @NotNull
-    LocalDate dateOfBirth,
+    LocalDate birthDate,
 
     @Schema(
         description =
@@ -80,7 +80,7 @@ public record DriverCreateDTO(
         rating,
         isVerified,
         balance,
-        dateOfBirth,
+        birthDate,
         driverCreateDocuments);
   }
 

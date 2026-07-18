@@ -18,7 +18,7 @@ public record DriverInformation(
     Double rating,
     Boolean isVerified,
     BigDecimal balance,
-    LocalDate dateOfBirth,
+    LocalDate birthDate,
     List<DriverDocument> documents,
     @Nullable Audit audit) {
 
@@ -33,7 +33,7 @@ public record DriverInformation(
         rating,
         isVerified,
         balance,
-        dateOfBirth,
+        birthDate,
         documents,
         audit);
   }

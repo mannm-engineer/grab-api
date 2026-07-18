@@ -35,7 +35,7 @@ class RideDispatchSchedulerIntegrationTest {
   // @spotless:off
   @Test
   @Sql(statements = {"""
-      INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, location_lat, location_lng, created_at, created_by)
+      INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, birth_date, location_lat, location_lng, created_at, created_by)
       VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, true, 1000.50, '1990-01-15', 10.0, 20.0, now(), 'SYSTEM');
       """, """
       INSERT INTO ride (passenger_id, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, status)
@@ -99,7 +99,7 @@ class RideDispatchSchedulerIntegrationTest {
   // @spotless:off
   @Test
   @Sql(statements = {"""
-      INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, location_lat, location_lng, created_at, created_by)
+      INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, birth_date, location_lat, location_lng, created_at, created_by)
       VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, true, 1000.50, '1990-01-15', 10.0, 20.0, now(), 'SYSTEM');
       """, """
       INSERT INTO ride (passenger_id, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, status)

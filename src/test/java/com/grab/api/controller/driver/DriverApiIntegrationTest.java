@@ -77,7 +77,7 @@ class DriverApiIntegrationTest {
               "rating": 4.5,
               "isVerified": false,
               "balance": 1000.50,
-              "dateOfBirth": "1990-01-15",
+              "birthDate": "1990-01-15",
               "documents": [
                 {
                   "type": "DRIVERS_LICENSE",
@@ -139,7 +139,7 @@ class DriverApiIntegrationTest {
               put("rating", 4.5);
               put("is_verified", false);
               put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("birth_date", Date.valueOf("1990-01-15"));
               put("created_by", "SYSTEM");
               put("updated_at", null);
               put("updated_by", null);
@@ -206,7 +206,7 @@ class DriverApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
+    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, birth_date, created_at, created_by)
     VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
   """)
   void createDriver_duplicateMobilePhone_responseConflict() {
@@ -227,7 +227,7 @@ class DriverApiIntegrationTest {
               "rating": 4.5,
               "isVerified": false,
               "balance": 1000.50,
-              "dateOfBirth": "1990-01-15",
+              "birthDate": "1990-01-15",
               "documents": [
                 {
                   "type": "DRIVERS_LICENSE",
@@ -270,7 +270,7 @@ class DriverApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
+    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, birth_date, created_at, created_by)
     VALUES ('John Doe', '+6591234567', 'AVAILABLE', 30, 4.5, false, 1000.50, '1990-01-15', now(), 'SYSTEM');
   """)
   void updateDriverLocation_driverExists_responseNoContent() {
@@ -300,7 +300,7 @@ class DriverApiIntegrationTest {
               put("rating", 4.5);
               put("is_verified", false);
               put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("birth_date", Date.valueOf("1990-01-15"));
               put("created_by", "SYSTEM");
               put("updated_at", null);
               put("updated_by", null);
@@ -358,7 +358,7 @@ class DriverApiIntegrationTest {
               put("rating", 4.5);
               put("is_verified", false);
               put("balance", new BigDecimal("1000.50"));
-              put("date_of_birth", Date.valueOf("1990-01-15"));
+              put("birth_date", Date.valueOf("1990-01-15"));
               put("created_by", "SYSTEM");
               put("updated_by", "SYSTEM");
             }

@@ -66,7 +66,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": null,
                 "isVerified": null,
                 "balance": null,
-                "dateOfBirth": null
+                "birthDate": null
               }
               """));
     }
@@ -81,7 +81,7 @@ class CreateDriverApiInputValidationTest {
           .andExpect(jsonPath("$.fieldErrors", hasItem("rating: must not be null")))
           .andExpect(jsonPath("$.fieldErrors", hasItem("isVerified: must not be null")))
           .andExpect(jsonPath("$.fieldErrors", hasItem("balance: must not be null")))
-          .andExpect(jsonPath("$.fieldErrors", hasItem("dateOfBirth: must not be null")));
+          .andExpect(jsonPath("$.fieldErrors", hasItem("birthDate: must not be null")));
     }
   }
 
@@ -187,7 +187,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15",
+                "birthDate": "1990-01-15",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -210,7 +210,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15",
+                "birthDate": "1990-01-15",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -251,7 +251,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": -0.1,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15",
+                "birthDate": "1990-01-15",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -274,7 +274,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": 5.1,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "1990-01-15",
+                "birthDate": "1990-01-15",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -315,7 +315,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "15/01/1990",
+                "birthDate": "15/01/1990",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -337,7 +337,7 @@ class CreateDriverApiInputValidationTest {
                 "rating": 4.5,
                 "isVerified": false,
                 "balance": 1000.50,
-                "dateOfBirth": "not-a-date",
+                "birthDate": "not-a-date",
                 "documents": [
                   {
                     "type": "DRIVERS_LICENSE",
@@ -374,7 +374,7 @@ class CreateDriverApiInputValidationTest {
                   "rating": 4.5,
                   "isVerified": false,
                   "balance": 1000.50,
-                  "dateOfBirth": "1990-01-15",
+                  "birthDate": "1990-01-15",
                   "documents": [
                     {
                       "type": "DRIVERS_LICENSE",

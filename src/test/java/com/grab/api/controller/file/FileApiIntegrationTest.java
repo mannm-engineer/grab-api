@@ -33,7 +33,7 @@ class FileApiIntegrationTest {
 
   @Test
   @Sql(statements = """
-    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, date_of_birth, created_at, created_by)
+    INSERT INTO driver (full_name, mobile_phone, status, age, rating, is_verified, balance, birth_date, created_at, created_by)
     VALUES ('Jane Doe', '+6599887766', 'AVAILABLE', 25, 4.0, true, 500.00, '1995-05-20', now(), 'SYSTEM');
     INSERT INTO driver_document (driver_id, type, document_number, expiry_date)
     VALUES (1, 'NATIONAL_ID', 'N1234567B', '2030-12-31');
